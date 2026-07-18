@@ -1,0 +1,5241 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>贪吃蛇吃苹果</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --leaf: #2f8f2f;
+      --leaf-dark: #176c25;
+      --grass: #b9ef58;
+      --cream: #fffbe8;
+      --grid: #9fcf64;
+      --apple: #e92f2f;
+      --blue: #138ce8;
+      --text: #164d22;
+      --shadow: 0 14px 28px rgba(32, 97, 22, 0.18);
+      --ref-width: 1680px;
+      --ref-height: 945px;
+      --hud-height: 92px;
+      --side-rail-width: 264px;
+      --bottom-rail-height: 150px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(93, 178, 69, 0.24)),
+        url("assets/treasure-island-bg.png") center / cover no-repeat;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      padding: 6px;
+    }
+
+    .game {
+      position: relative;
+      width: min(1260px, 100%);
+      height: calc(100vh - 12px);
+      max-height: calc(100vh - 12px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    /* ---- 玩家切换器 ---- */
+    .player-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 2px solid rgba(111, 186, 46, 0.35);
+      border-radius: 12px;
+      padding: 3px 5px;
+      box-shadow: var(--shadow);
+    }
+
+    .player-avatar {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 0;
+      background: #fff;
+      font-size: 20px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+      transition: transform 0.1s;
+    }
+
+    .player-avatar:hover {
+      transform: scale(1.08);
+    }
+
+    .player-avatar[aria-pressed="true"] {
+      box-shadow:
+        inset 0 0 0 3px #16812d,
+        inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+    }
+
+    .player-add,
+    .player-edit {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 0;
+      background: linear-gradient(#70e73d, #2da226);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: inset 0 -3px 0 rgba(0, 84, 0, 0.25);
+    }
+
+    .player-edit {
+      background: linear-gradient(#fff7a8, #f0a713);
+      color: #0c4a1d;
+      font-size: 17px;
+      box-shadow: inset 0 -3px 0 rgba(125, 73, 0, 0.25);
+    }
+
+    .player-add:disabled {
+      background: #c9d4bd;
+      color: #fff;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* ---- 玩家管理弹窗（新建/编辑/删除） ---- */
+    .modal {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(255, 251, 232, 0.84);
+      text-align: center;
+      z-index: 5;
+    }
+
+    .modal[hidden] {
+      display: none;
+    }
+
+    .modal-card {
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 4px solid #78c43e;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-card h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: #16812d;
+    }
+
+    .modal-card input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 2px solid rgba(111, 186, 46, 0.5);
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #0c4a1d;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+
+    .avatar-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .avatar-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid rgba(111, 186, 46, 0.4);
+      background: #fff;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .avatar-option[aria-pressed="true"] {
+      border-color: #16812d;
+      box-shadow: inset 0 0 0 3px rgba(106, 207, 54, 0.4);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions .danger {
+      background: linear-gradient(#ff8f6a, #e0492f);
+      box-shadow: inset 0 -4px 0 rgba(125, 30, 0, 0.3), var(--shadow);
+    }
+
+    .player-name-tag {
+      font-size: 11px;
+      font-weight: 900;
+      color: #0c4a1d;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ---- 主题切换器 ---- */
+    .theme-switcher {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .theme-btn {
+      border: 2px solid rgba(111, 186, 46, 0.35);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      color: #0c4a1d;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 10px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .theme-btn[aria-pressed="true"] {
+      background: linear-gradient(#70e73d, #2da226);
+      color: #fff;
+      border-color: #16812d;
+    }
+
+    h1 {
+      margin: 0;
+      color: #58c915;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 0.9;
+      text-shadow:
+        0 4px 0 #0b5c21,
+        0 0 0 #fff,
+        0 9px 16px rgba(40, 93, 17, 0.22);
+      -webkit-text-stroke: 3px #fff;
+      paint-order: stroke fill;
+    }
+
+    .stats {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 69, 42, 0.84);
+      border: 3px solid rgba(255, 239, 164, 0.88);
+      border-radius: 14px;
+      padding: 4px 6px;
+      box-shadow: inset 0 0 0 2px rgba(46, 137, 73, 0.62), var(--shadow);
+    }
+
+    .stat {
+      min-width: 64px;
+      padding: 3px 7px;
+      border: 1px solid rgba(204, 255, 183, 0.82);
+      border-radius: 9px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(237, 255, 222, 0.94));
+      box-shadow: inset 0 -3px 0 rgba(65, 144, 46, 0.13);
+      text-align: center;
+    }
+
+    .stat.status-stat {
+      min-width: 108px;
+      text-align: left;
+    }
+
+    .label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      color: #2d7428;
+    }
+
+    .value {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 900;
+      color: #0c4a1d;
+    }
+
+    .restart,
+    .record-toggle,
+    .feature-toggle,
+    .motion-toggle,
+    .buy-feature,
+    .shop-use {
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(#45b8ff, var(--blue));
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      min-height: 36px;
+      padding: 0 12px;
+      box-shadow: inset 0 -4px 0 rgba(0, 65, 133, 0.3), var(--shadow);
+      cursor: pointer;
+    }
+
+    .record-toggle {
+      background: linear-gradient(#ffe779, #f0a713);
+      box-shadow: inset 0 -4px 0 rgba(125, 73, 0, 0.28), var(--shadow);
+    }
+
+    .feature-toggle {
+      background: linear-gradient(#ff8af0, #9b45e8);
+      box-shadow: inset 0 -4px 0 rgba(88, 20, 130, 0.28), var(--shadow);
+    }
+
+    .motion-toggle {
+      background: linear-gradient(#8ae9ff, #2b8acb);
+      box-shadow: inset 0 -4px 0 rgba(5, 66, 113, 0.3), var(--shadow);
+    }
+
+    .buy-feature {
+      min-height: 30px;
+      padding: 0 10px;
+      font-size: 12px;
+      background: linear-gradient(#70e73d, #2da226);
+      box-shadow: inset 0 -3px 0 rgba(0, 84, 0, 0.25);
+    }
+
+    .buy-feature:disabled {
+      background: #c9d4bd;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .restart:active,
+    .record-toggle:active,
+    .feature-toggle:active,
+    .motion-toggle:active,
+    .buy-feature:active,
+    .shop-use:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 -3px 0 rgba(0, 65, 133, 0.3), 0 8px 18px rgba(32, 97, 22, 0.16);
+    }
+
+    .play-layout {
+      --board-size: min(calc(100vh - 204px), calc(100vw - 236px), 900px);
+      display: grid;
+      grid-template-columns: minmax(104px, 112px) var(--board-size) minmax(104px, 112px);
+      align-items: stretch;
+      justify-content: center;
+      justify-self: center;
+      width: calc(var(--board-size) + 236px);
+      max-width: 100%;
+      gap: 6px;
+      min-height: 0;
+    }
+
+    .snake-column {
+      display: grid;
+      grid-template-rows: repeat(6, auto);
+      align-content: center;
+      gap: 4px;
+      min-height: 0;
+    }
+
+    .snake-option {
+      border: 2px solid rgba(27, 116, 31, 0.25);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--text);
+      min-height: 0;
+      padding: 3px 5px;
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      justify-items: center;
+      gap: 3px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .snake-option[aria-pressed="true"] {
+      border-color: #16812d;
+      background: linear-gradient(180deg, #fffdf0, #e5ffc7);
+      box-shadow:
+        inset 0 0 0 3px rgba(106, 207, 54, 0.36),
+        0 0 0 3px rgba(255, 223, 106, 0.72),
+        0 10px 22px rgba(12, 61, 34, 0.28);
+    }
+
+    .snake-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0;
+      background-image: url("assets/snake-portraits-royal-v3-alpha.png");
+      background-size: 400% 300%;
+      background-repeat: no-repeat;
+      background-color: #dff7bd;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .snake-avatar.sprout {
+      background-color: #70e73d;
+      background-position: 0% 0%;
+    }
+
+    .snake-avatar.apple {
+      background-color: #ff8f5a;
+      background-position: 33.333% 0%;
+    }
+
+    .snake-avatar.spark {
+      background-color: #357aff;
+      background-position: 66.666% 0%;
+    }
+
+    .snake-avatar.berry {
+      background-color: #4b88ff;
+      background-position: 100% 0%;
+    }
+
+    .snake-avatar.coin {
+      background-color: #f0a713;
+      background-position: 0% 50%;
+    }
+
+    .snake-avatar.rainbow {
+      background-color: #ff8fa0;
+      background-position: 33.333% 50%;
+    }
+
+    .snake-avatar.flower {
+      background-color: #ff6fae;
+      background-position: 66.666% 50%;
+    }
+
+    .snake-avatar.cloud {
+      background-color: #8fd6ff;
+      background-position: 100% 50%;
+    }
+
+    .snake-avatar.gem {
+      background-color: #8b5cff;
+      background-position: 0% 100%;
+    }
+
+    .snake-avatar.candy {
+      background-color: #ff8fce;
+      background-position: 33.333% 100%;
+    }
+
+    .snake-avatar.ocean {
+      background-color: #138ce8;
+      background-position: 66.666% 100%;
+    }
+
+    .snake-avatar.fire {
+      background-color: #ff5f35;
+      background-position: 100% 100%;
+    }
+
+    .snake-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 900;
+      color: #0c4a1d;
+      white-space: nowrap;
+    }
+
+    .snake-level {
+      display: inline-block;
+      margin: 1px 0 0;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: #dfff7a;
+      color: #176c25;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .snake-xp {
+      display: inline-block;
+      margin-left: 4px;
+      color: #176c25;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .snake-skill {
+      display: block;
+      font-size: 12px;
+      line-height: 1.18;
+      font-weight: 800;
+      color: #2d7428;
+    }
+
+    @media (min-width: 901px) {
+      .snake-skill,
+      .snake-xp {
+        display: none;
+      }
+    }
+
+    .board-stack {
+      position: relative;
+      display: grid;
+      grid-template-rows: var(--board-size) auto;
+      align-content: center;
+      gap: 6px;
+      width: var(--board-size);
+      min-width: 0;
+      justify-self: center;
+      align-self: center;
+    }
+
+    .board-stack::before,
+    .board-stack::after {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+      background-repeat: no-repeat;
+      filter: drop-shadow(0 14px 18px rgba(35, 69, 23, 0.28));
+    }
+
+    .board-stack::before {
+      left: -76px;
+      bottom: 86px;
+      width: 116px;
+      height: 96px;
+      background-image: url("assets/reward-chests-transparent.png");
+      background-size: 400% 300%;
+      background-position: 100% 100%;
+    }
+
+    .board-stack::after {
+      right: -72px;
+      top: 24px;
+      width: 108px;
+      height: 108px;
+      background-image: url("assets/powerup-icons-transparent.png");
+      background-size: 400% 400%;
+      background-position: 66.666% 33.333%;
+      opacity: 0.92;
+    }
+
+    .board-wrap {
+      position: relative;
+      z-index: 1;
+      width: var(--board-size);
+      aspect-ratio: 1;
+      justify-self: center;
+      align-self: center;
+      border: 10px solid var(--leaf-dark);
+      border-radius: 22px;
+      background: var(--cream);
+      box-shadow:
+        inset 0 0 0 5px #55b929,
+        0 0 0 4px rgba(255, 223, 106, 0.42),
+        0 18px 34px rgba(12, 61, 34, 0.28);
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: var(--cream);
+    }
+
+    .board-shop {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      padding: 6px;
+      border: 4px solid rgba(255, 255, 255, 0.88);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(23, 73, 54, 0.94), rgba(10, 43, 33, 0.94)),
+        url("assets/reward-ui-kit-transparent.png") center 80% / 125% auto no-repeat;
+      box-shadow:
+        inset 0 0 0 2px rgba(255, 223, 106, 0.5),
+        0 16px 28px rgba(8, 45, 30, 0.32);
+    }
+
+    .board-shop-list {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .shop-use {
+      min-width: 0;
+      min-height: 82px;
+      padding: 7px;
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr);
+      grid-template-rows: minmax(24px, auto) auto;
+      align-items: center;
+      column-gap: 5px;
+      row-gap: 3px;
+      text-align: left;
+      border: 3px solid #fff;
+      background: linear-gradient(180deg, #fff5b8, #e8ad1f);
+      color: #143d2d;
+      box-shadow:
+        inset 0 -5px 0 rgba(125, 73, 0, 0.22),
+        0 10px 18px rgba(8, 45, 30, 0.24);
+      overflow: hidden;
+    }
+
+    .shop-use:disabled {
+      background: linear-gradient(180deg, #e6eadc, #bdc9b4);
+      color: rgba(22, 77, 34, 0.7);
+      box-shadow: inset 0 -3px 0 rgba(91, 117, 62, 0.16);
+      cursor: not-allowed;
+    }
+
+    .shop-art {
+      grid-row: 1 / 3;
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      background-image: url("assets/powerup-icons-v2.png");
+      background-size: 300% 200%;
+      background-repeat: no-repeat;
+      background-color: rgba(20, 61, 45, 0.9);
+      box-shadow:
+        inset 0 -4px 0 rgba(0, 0, 0, 0.16),
+        0 6px 12px rgba(12, 61, 34, 0.18);
+      line-height: 1;
+    }
+
+    .shop-name {
+      min-width: 0;
+      font-size: 14px;
+      line-height: 1.08;
+      font-weight: 900;
+      white-space: normal;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .shop-meta {
+      min-width: 0;
+      display: flex;
+      gap: 3px 5px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 10px;
+      line-height: 1.05;
+      font-weight: 900;
+    }
+
+    .shop-count {
+      color: #7540b8;
+    }
+
+    .shop-state {
+      color: #176c25;
+    }
+
+    .message {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(255, 251, 232, 0.74);
+      text-align: center;
+    }
+
+    .message[hidden] {
+      display: none;
+    }
+
+    .message-card {
+      max-width: 520px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 251, 232, 0.94)),
+        url("assets/reward-ui-kit-transparent.png") center 22% / 125% auto no-repeat;
+      border: 5px solid #78c43e;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow:
+        0 0 0 4px rgba(255, 223, 106, 0.32),
+        var(--shadow);
+    }
+
+    .message-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: clamp(28px, 5vw, 40px);
+      color: #16812d;
+    }
+
+    .message-card p {
+      margin: 0 0 16px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .snake-detail {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 14px;
+      padding: 12px;
+      border: 3px solid rgba(111, 186, 46, 0.54);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(223, 255, 122, 0.4));
+      text-align: left;
+    }
+
+    .snake-detail-art {
+      width: 82px;
+      height: 82px;
+      border-radius: 18px;
+      background-image: url("assets/snake-portraits-royal-v3-alpha.png");
+      background-size: 400% 300%;
+      background-repeat: no-repeat;
+      background-color: #dff7bd;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.12), 0 8px 16px rgba(12, 61, 34, 0.18);
+    }
+
+    .snake-detail-art.sprout { background-position: 0% 0%; }
+    .snake-detail-art.apple { background-position: 33.333% 0%; }
+    .snake-detail-art.spark { background-position: 66.666% 0%; }
+    .snake-detail-art.berry { background-position: 100% 0%; }
+    .snake-detail-art.coin { background-position: 0% 50%; }
+    .snake-detail-art.rainbow { background-position: 33.333% 50%; }
+    .snake-detail-art.flower { background-position: 66.666% 50%; }
+    .snake-detail-art.cloud { background-position: 100% 50%; }
+    .snake-detail-art.gem { background-position: 0% 100%; }
+    .snake-detail-art.candy { background-position: 33.333% 100%; }
+    .snake-detail-art.ocean { background-position: 66.666% 100%; }
+    .snake-detail-art.fire { background-position: 100% 100%; }
+
+    .snake-detail-copy {
+      min-width: 0;
+    }
+
+    .snake-detail h3 {
+      margin: 0;
+      font-size: 19px;
+      color: #0c4a1d;
+    }
+
+    .snake-detail dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 8px;
+      margin: 0;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .snake-detail dt {
+      color: #2d7428;
+    }
+
+    .snake-detail dd {
+      margin: 0;
+      color: #0c4a1d;
+    }
+
+    .reward-preview {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 3px solid rgba(255, 223, 106, 0.78);
+      background:
+        linear-gradient(180deg, rgba(20, 61, 45, 0.94), rgba(10, 43, 33, 0.94)),
+        url("assets/reward-ui-kit-transparent.png") center bottom / 150% auto no-repeat;
+      color: #fff;
+      text-align: left;
+      box-shadow: 0 12px 22px rgba(8, 45, 30, 0.22);
+    }
+
+    .reward-chest-art {
+      width: 84px;
+      height: 68px;
+      border-radius: 16px;
+      background-image: url("assets/reward-chests-transparent.png");
+      background-size: 400% 300%;
+      background-position: 100% 0%;
+      background-repeat: no-repeat;
+      filter: drop-shadow(0 0 10px rgba(255, 223, 106, 0.72));
+    }
+
+    .reward-preview strong {
+      display: block;
+      margin: 0 0 3px;
+      color: #ffdf6a;
+      font-size: 18px;
+      line-height: 1.05;
+    }
+
+    .reward-preview span {
+      display: block;
+      color: #d7f7d5;
+      font-size: 13px;
+      line-height: 1.22;
+      font-weight: 900;
+    }
+
+    .quick-help {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: min(520px, 76vw);
+      justify-self: center;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(111, 186, 46, 0.35);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      line-height: 1.1;
+      font-weight: 900;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .theme-switcher,
+    .controls {
+      pointer-events: auto;
+    }
+
+    .history,
+    .feature-shop {
+      background: rgba(255, 255, 255, 0.78);
+      border: 3px solid rgba(111, 186, 46, 0.35);
+      border-radius: 14px;
+      padding: 5px 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .history-popover {
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 150px;
+      z-index: 4;
+      width: min(320px, 92vw);
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .feature-popover {
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 80px;
+      z-index: 4;
+      width: min(360px, 94vw);
+      background: rgba(255, 255, 255, 0.97);
+    }
+
+    .history-popover[hidden],
+    .feature-popover[hidden] {
+      display: none;
+    }
+
+    .history h2,
+    .feature-shop h2 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: #0c4a1d;
+      text-align: center;
+    }
+
+    .feature-balance {
+      margin: 0 0 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #7540b8;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .feature-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-radius: 10px;
+      background: rgba(223, 255, 122, 0.38);
+      padding: 7px;
+    }
+
+    .feature-item strong {
+      display: block;
+      font-size: 13px;
+      color: #0c4a1d;
+    }
+
+    .feature-item span {
+      display: block;
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: #2d7428;
+    }
+
+    .task-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-radius: 10px;
+      background: rgba(69, 184, 255, 0.14);
+      padding: 7px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #176c25;
+    }
+
+    .task-item strong {
+      display: block;
+      font-size: 13px;
+      color: #0c4a1d;
+    }
+
+    .task-status {
+      min-width: 56px;
+      text-align: right;
+      color: #7540b8;
+    }
+
+    .adventure-panel {
+      display: grid;
+      gap: 3px;
+      margin: 7px 0;
+      padding: 8px;
+      border: 2px solid rgba(246, 200, 75, 0.72);
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255, 248, 205, 0.92), rgba(218, 255, 174, 0.72));
+      color: #285b22;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .adventure-panel strong,
+    .adventure-heading {
+      color: #7540b8;
+      font-size: 13px;
+    }
+
+    .adventure-heading {
+      margin: 9px 0 3px !important;
+    }
+
+    .collection-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .collection-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 5px;
+      align-items: center;
+      padding: 5px;
+      border-radius: 9px;
+      background: rgba(255, 240, 167, 0.58);
+      color: #5f3b0d;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .collection-mark {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #f3bd38;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .chest-choice-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      width: 100%;
+      margin: 9px 0 3px;
+    }
+
+    .chest-choice {
+      min-height: 122px;
+      padding: 8px 6px;
+      display: grid;
+      grid-template-rows: 56px auto auto auto;
+      justify-items: center;
+      gap: 3px;
+      border: 3px solid #e8b73b;
+      border-radius: 13px;
+      background: linear-gradient(180deg, #fffdf0 0%, #ffe99a 55%, #f3bd3b 100%);
+      color: #5f3b0d;
+      font-family: "Trebuchet MS", "PingFang SC", sans-serif;
+      cursor: pointer;
+      box-shadow: inset 0 -5px 0 rgba(129, 76, 4, 0.2), 0 5px 10px rgba(93, 58, 10, 0.18);
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    .chest-choice:hover,
+    .chest-choice:focus-visible {
+      transform: translateY(-4px) scale(1.03);
+      filter: brightness(1.08);
+      outline: 0;
+    }
+
+    .chest-choice-art {
+      width: 56px;
+      height: 56px;
+      background-image: url("assets/powerup-showcase-v4-contained.png");
+      background-size: 400% 100%;
+      background-repeat: no-repeat;
+      filter: drop-shadow(0 4px 3px rgba(91, 53, 5, 0.28));
+    }
+
+    .chest-choice-title {
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .chest-choice-note {
+      min-height: 24px;
+      font-size: 10px;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .chest-choice-claim {
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: #0d7e54;
+      color: #fffdf0;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .history-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 14px;
+      background: rgba(223, 255, 122, 0.42);
+      padding: 4px 7px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #176c25;
+    }
+
+    .history-empty {
+      margin: 0;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #2d7428;
+    }
+
+    .controls {
+      display: none;
+      grid-template-columns: repeat(3, 30px);
+      grid-template-rows: repeat(2, 30px);
+      gap: 3px;
+    }
+
+    .control {
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(#69cf36, #2c9f1f);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: inset 0 -4px 0 rgba(0, 84, 0, 0.25);
+      cursor: pointer;
+    }
+
+    .control[data-dir="up"] {
+      grid-column: 2;
+    }
+
+    .control[data-dir="left"] {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .control[data-dir="down"] {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .control[data-dir="right"] {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+        padding: 12px;
+      }
+
+      .game {
+        position: static;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .player-bar {
+        order: -1;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .stats {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stat.status-stat {
+        min-width: 120px;
+        text-align: center;
+      }
+
+      .restart {
+        flex: 1 1 120px;
+      }
+
+      .play-layout {
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 8px;
+      }
+
+      .snake-column {
+        grid-template-rows: none;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        order: 1;
+      }
+
+      .board-wrap {
+        order: 2;
+      }
+
+      .board-stack {
+        width: min(94vmin, 520px);
+        order: 2;
+        grid-template-rows: auto auto;
+      }
+
+      .board-stack::before,
+      .board-stack::after {
+        display: none;
+      }
+
+      .board-wrap {
+        width: min(94vmin, 520px);
+        border-width: 9px;
+        border-radius: 22px;
+      }
+
+      .snake-column-right {
+        order: 3;
+      }
+
+      .quick-help {
+        display: flex;
+        position: static;
+        transform: none;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        pointer-events: auto;
+        font-size: 12px;
+      }
+
+      .controls {
+        display: grid;
+      }
+
+      .board-shop-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .history-popover {
+        right: 0;
+      }
+    }
+
+    @media (max-width: 1300px) {
+      .board-stack::before,
+      .board-stack::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 6px;
+      }
+
+      .game {
+        gap: 3px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .stats {
+        padding: 3px;
+      }
+
+      .value {
+        font-size: 16px;
+      }
+
+      .restart,
+      .record-toggle,
+      .feature-toggle {
+        min-height: 34px;
+        font-size: 14px;
+      }
+
+      .snake-column {
+        gap: 4px;
+      }
+
+      .snake-option {
+        padding: 4px 3px;
+        gap: 2px;
+      }
+
+      .snake-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+      }
+
+      .snake-name {
+        font-size: 12px;
+      }
+
+      .snake-skill {
+        font-size: 11px;
+        line-height: 1.05;
+      }
+
+      .board-wrap {
+        width: min(86vmin, 336px);
+        border-width: 7px;
+      }
+
+      .board-stack {
+        width: min(86vmin, 336px);
+      }
+
+      .shop-use {
+        min-height: 60px;
+      }
+
+      .message-card {
+        padding: 14px;
+      }
+    }
+
+    /* ---- 果园典藏界面：以主概念图为基准的桌面版视觉外壳 ---- */
+    @media (min-width: 901px) {
+      :root {
+        --gold: #f6c84b;
+        --gold-light: #fff4bd;
+        --deep-green: #073f31;
+        --panel-green: #075341;
+      }
+
+      body {
+        padding: 8px;
+        background:
+          linear-gradient(180deg, rgba(5, 42, 27, 0.28), rgba(3, 43, 29, 0.66)),
+          url("assets/orchard-royal-bg-v3.png") center / cover no-repeat;
+      }
+
+      .game {
+        width: min(1640px, 100%);
+        height: calc(100vh - 16px);
+        grid-template-rows: 76px minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .topbar {
+        grid-template-columns: auto minmax(0, 1fr) repeat(4, auto);
+        gap: 9px;
+        padding: 4px 10px;
+        border: 3px solid var(--gold);
+        border-radius: 22px;
+        background: linear-gradient(180deg, #0c5e46, #063c30);
+        box-shadow: inset 0 0 0 3px rgba(255, 249, 197, 0.34), 0 12px 28px rgba(0, 31, 22, 0.48);
+      }
+
+      h1 { display: none; }
+
+      .player-bar {
+        gap: 5px;
+        min-height: 58px;
+        padding: 5px 7px;
+        border: 2px solid var(--gold);
+        border-radius: 17px;
+        background: linear-gradient(180deg, #fff9db, #ead99b);
+        box-shadow: inset 0 -4px 0 rgba(111, 76, 15, 0.16);
+      }
+
+      .player-avatar,
+      .player-add,
+      .player-edit {
+        width: 42px;
+        height: 42px;
+        border: 2px solid #e4ac2d;
+        font-size: 22px;
+      }
+
+      .player-avatar {
+        font-size: 0;
+        background-image: url("assets/snake-portraits-royal-v3-crisp.png");
+        background-size: 400% 300%;
+        background-position: 0% 0%;
+        background-repeat: no-repeat;
+        background-color: #dff7bd;
+      }
+
+      .stats {
+        min-width: 0;
+        height: 62px;
+        gap: 7px;
+        padding: 4px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .stat,
+      .stat.status-stat {
+        min-width: 0;
+        height: 54px;
+        flex: 1 1 84px;
+        padding: 4px 10px;
+        border: 2px solid #d5a432;
+        border-radius: 15px;
+        background: linear-gradient(180deg, #fffdf0, #f1dfae);
+        box-shadow: inset 0 -4px 0 rgba(120, 77, 16, 0.14), 0 4px 8px rgba(0, 29, 20, 0.26);
+        text-align: center;
+      }
+
+      .stat.status-stat { flex-basis: 106px; }
+      .label { font-size: 11px; color: #78501a; }
+      .value { font-size: 25px; color: #4d2c0a; text-shadow: 0 1px 0 #fff; }
+
+      .stat-art {
+        display: inline-block;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        background-image: url("assets/hud-icons-demo-v5-contained.png");
+        background-repeat: no-repeat;
+        background-size: 500% 100%;
+        filter: drop-shadow(0 2px 1px rgba(84, 47, 0, 0.24));
+      }
+
+      .stat-art-trophy { background-position: 0% 0%; }
+      .stat-art-crown { background-position: 25% 0%; }
+      .stat-art-candy { background-position: 50% 0%; }
+      .stat-art-snake { background-position: 75% 0%; }
+      .stat-art-star { background-position: 100% 0%; }
+
+      .stats .stat:not(.round-stat) {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: 6px;
+      }
+
+      .stats .stat:not(.round-stat) .label {
+        grid-column: 2;
+        line-height: 1;
+      }
+
+      .stats .stat:not(.round-stat) .value {
+        grid-column: 2;
+        line-height: 1.05;
+      }
+
+      .stats .stat-art { grid-row: 1 / span 2; }
+      .stats .round-stat { display: none; }
+
+      .feature-toggle,
+      .record-toggle,
+      .motion-toggle,
+      .restart {
+        min-width: 62px;
+        min-height: 54px;
+        padding: 0 11px;
+        border: 2px solid var(--gold-light);
+        border-radius: 15px;
+        font-size: 15px;
+        box-shadow: inset 0 -5px 0 rgba(0, 37, 54, 0.3), 0 5px 10px rgba(0, 26, 20, 0.34);
+      }
+
+      .play-layout {
+        --board-size: min(calc(100vh - 218px), calc(100vw - 438px), 710px);
+        grid-template-columns: 238px minmax(0, 1fr) 238px;
+        width: 100%;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .snake-column {
+        gap: 10px;
+        align-content: center;
+        width: 100%;
+      }
+
+      .snake-option {
+        position: relative;
+        min-height: 108px;
+        padding: 3px 10px 3px 42px;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 8px;
+        border: 3px solid #f5c64e;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(19, 112, 91, 0.98), rgba(5, 65, 78, 0.98));
+        color: #fff;
+        text-align: left;
+        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22), inset 0 -6px 0 rgba(0, 24, 31, 0.24), 0 10px 16px rgba(0, 29, 20, 0.42);
+      }
+
+      .snake-option::before {
+        position: absolute;
+        left: 7px;
+        top: 50%;
+        z-index: 2;
+        width: 31px;
+        height: 38px;
+        transform: translateY(-50%);
+        border: 2px solid #fff0a7;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #d79a26, #8e5310);
+        color: #fffdf1;
+        font-size: 17px;
+        font-weight: 900;
+        line-height: 34px;
+        text-align: center;
+        box-shadow: inset 0 -3px 0 rgba(74, 34, 0, 0.24);
+      }
+
+      .snake-option[aria-pressed="true"] {
+        border-color: #fff5ac;
+        background: linear-gradient(135deg, #5c9425, #166b3b);
+        box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.4), 0 0 0 3px rgba(255, 210, 55, 0.78), 0 0 24px rgba(255, 222, 82, 0.72);
+      }
+
+      .snake-column-left .snake-option:nth-child(1), .snake-column-right .snake-option:nth-child(3) { background: linear-gradient(135deg, #127c9b, #06436b); }
+      .snake-column-left .snake-option:nth-child(2), .snake-column-right .snake-option:nth-child(4) { background: linear-gradient(135deg, #2273c8, #0a3f8c); }
+      .snake-column-left .snake-option:nth-child(3), .snake-column-right .snake-option:nth-child(5) { background: linear-gradient(135deg, #7133a5, #34215e); }
+      .snake-column-left .snake-option:nth-child(4), .snake-column-right .snake-option:nth-child(2) { background: linear-gradient(135deg, #bf4c12, #71300d); }
+      .snake-column-left .snake-option:nth-child(5), .snake-column-right .snake-option:nth-child(6) { background: linear-gradient(135deg, #b88425, #6b4810); }
+      .snake-column-left .snake-option:nth-child(6), .snake-column-right .snake-option:nth-child(1) { background: linear-gradient(135deg, #b93d6d, #6a1742); }
+
+      .snake-column-left .snake-option:nth-child(1)::before { content: "1"; }
+      .snake-column-left .snake-option:nth-child(2)::before { content: "2"; }
+      .snake-column-left .snake-option:nth-child(3)::before { content: "3"; }
+      .snake-column-left .snake-option:nth-child(4)::before { content: "4"; }
+      .snake-column-left .snake-option:nth-child(5)::before { content: "5"; }
+      .snake-column-left .snake-option:nth-child(6)::before { content: "6"; }
+      .snake-column-right .snake-option:nth-child(1)::before { content: "7"; }
+      .snake-column-right .snake-option:nth-child(2)::before { content: "8"; }
+      .snake-column-right .snake-option:nth-child(3)::before { content: "9"; }
+      .snake-column-right .snake-option:nth-child(4)::before { content: "10"; }
+      .snake-column-right .snake-option:nth-child(5)::before { content: "11"; }
+      .snake-column-right .snake-option:nth-child(6)::before { content: "12"; }
+
+      .snake-avatar {
+        position: absolute;
+        top: 2px;
+        left: 42px;
+        width: 162px;
+        height: 108px;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background-color: transparent;
+        background-size: 400% 300%;
+        background-image: url("assets/snake-side-portraits-v7-contained.png");
+      }
+
+      .snake-avatar.sprout,
+      .snake-avatar.apple,
+      .snake-avatar.spark,
+      .snake-avatar.berry,
+      .snake-avatar.coin,
+      .snake-avatar.rainbow,
+      .snake-avatar.flower,
+      .snake-avatar.cloud,
+      .snake-avatar.gem,
+      .snake-avatar.candy,
+      .snake-avatar.ocean,
+      .snake-avatar.fire { background-color: transparent; }
+
+      /* Each rail portrait is an isolated image: no neighbouring sprite can leak into a card. */
+      .snake-avatar {
+        background-size: auto 100%;
+        background-position: center;
+        clip-path: inset(0 22px);
+      }
+
+      .snake-avatar.sprout { background-image: url("assets/snake-side-sprout-clean.png"); }
+      .snake-avatar.apple { background-image: url("assets/snake-side-apple-clean.png"); }
+      .snake-avatar.spark { background-image: url("assets/snake-side-spark-clean.png"); }
+      .snake-avatar.berry { background-image: url("assets/snake-side-berry-clean.png"); }
+      .snake-avatar.coin { background-image: url("assets/snake-side-coin-clean.png"); }
+      .snake-avatar.rainbow { background-image: url("assets/snake-side-rainbow-clean.png"); }
+      .snake-avatar.flower { background-image: url("assets/snake-side-flower-clean.png"); }
+      .snake-avatar.cloud { background-image: url("assets/snake-side-cloud-clean.png"); }
+      .snake-avatar.gem { background-image: url("assets/snake-side-gem-clean.png"); }
+      .snake-avatar.candy { background-image: url("assets/snake-side-candy-clean.png"); }
+      .snake-avatar.ocean { background-image: url("assets/snake-side-ocean-clean.png"); }
+      .snake-avatar.fire { background-image: url("assets/snake-side-fire-clean.png"); }
+
+      .snake-column-right .snake-avatar {
+        right: 8px;
+        left: auto;
+        transform: scaleX(-1);
+      }
+
+      .snake-option > span:last-child { display: none; }
+      .snake-name { color: #fffdf0; font-size: 16px; line-height: 1.1; text-shadow: 0 2px 0 rgba(0, 37, 31, 0.38); }
+      .snake-level { margin-top: 5px; padding: 2px 7px; background: #fff1a7; color: #6a3e0c; font-size: 12px; }
+
+      .board-stack {
+        grid-template-rows: var(--board-size) 108px;
+        gap: 10px;
+        width: var(--board-size);
+        justify-self: center;
+      }
+
+      .board-stack::before {
+        left: -70px;
+        bottom: 66px;
+        width: 126px;
+        height: 108px;
+        z-index: 2;
+        display: none;
+        background-image: url("assets/reward-chests-transparent.png");
+        background-size: 400% 300%;
+        background-position: 100% 100%;
+      }
+
+      .board-stack::after {
+        right: -66px;
+        top: 15px;
+        width: 112px;
+        height: 112px;
+        z-index: 2;
+        display: none;
+        background-image: url("assets/powerup-icons-transparent.png");
+        background-size: 400% 400%;
+        background-position: 66.666% 33.333%;
+      }
+
+      .board-wrap {
+        border: 12px solid #0a4c36;
+        border-radius: 21px;
+        background: #cce896;
+        box-shadow: inset 0 0 0 3px #73af35, inset 0 0 0 7px #f7d05b, inset 0 0 0 10px #7b9727, 0 0 0 5px #123c29, 0 22px 34px rgba(0, 27, 19, 0.56);
+        overflow: visible;
+      }
+
+      .board-wrap::before,
+      .board-wrap::after {
+        display: none;
+      }
+
+      .board-corner {
+        position: absolute;
+        z-index: 4;
+        width: 64px;
+        height: 64px;
+        pointer-events: none;
+        background-image: url("assets/orchard-board-decor-v1-alpha.png");
+        background-size: 400% 200%;
+        background-position: 100% 100%;
+        filter: drop-shadow(0 5px 5px rgba(0, 42, 27, 0.42));
+      }
+
+      .board-corner-nw { top: -32px; left: -32px; transform: rotate(-18deg); }
+      .board-corner-ne { top: -32px; right: -32px; transform: rotate(18deg); }
+      .board-corner-sw { bottom: -32px; left: -32px; transform: rotate(-122deg); }
+      .board-corner-se { right: -32px; bottom: -32px; transform: rotate(122deg); }
+
+      canvas { border-radius: 8px; }
+
+      .board-shop {
+        padding: 8px 14px;
+        border: 4px solid #f5c64e;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #075847, #043e34);
+        box-shadow: inset 0 0 0 2px rgba(255, 247, 186, 0.36), 0 12px 22px rgba(0, 29, 20, 0.5);
+      }
+
+      .board-shop-list { gap: 9px; }
+
+      .shop-use {
+        min-height: 86px;
+        padding: 6px 6px 5px;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+        justify-items: center;
+        gap: 2px;
+        border: 2px solid #e8b73b;
+        border-radius: 13px;
+        background: linear-gradient(180deg, #156d5b, #074d42);
+        color: #fffdf2;
+        text-align: center;
+        box-shadow: inset 0 -4px 0 rgba(0, 24, 25, 0.3), 0 5px 10px rgba(0, 21, 17, 0.38);
+      }
+
+      .shop-art {
+        grid-row: auto;
+        width: 70px;
+        height: 70px;
+        border: 0;
+        border-radius: 0;
+        background-color: transparent;
+        background-image: url("assets/powerup-showcase-v4-contained.png");
+        background-size: 400% 100%;
+        box-shadow: none;
+      }
+
+      .shop-name { display: none; }
+      .shop-meta { display: contents; }
+      .shop-meta > :not(.shop-count) { display: none; }
+      .shop-count {
+        position: absolute;
+        right: 4px;
+        bottom: 3px;
+        min-width: 22px;
+        min-height: 22px;
+        padding: 3px 4px;
+        border: 2px solid #fff0a7;
+        border-radius: 8px;
+        background: #1267b5;
+        color: #fff;
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      .message {
+        padding: 22px;
+        background: rgba(3, 47, 32, 0.32);
+      }
+
+      .message-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: min(552px, calc(100% - 24px));
+        max-width: none;
+        padding: 16px 24px 18px;
+        border: 5px solid #d6a330;
+        border-radius: 28px;
+        background: linear-gradient(180deg, #fffdf4 0%, #fff9df 28%, #fff3c7 58%, #eed69b 100%);
+        box-shadow: inset 0 0 0 3px #fff7cb, inset 0 -8px 0 rgba(176, 116, 15, 0.12), 0 18px 32px rgba(0, 31, 19, 0.54);
+      }
+
+      .message-card > strong { order: 1; margin-bottom: 3px; color: #5f3b0d; font-size: 27px; text-shadow: 0 2px 0 #fff; }
+      .message-card > p { order: 2; margin-bottom: 4px; color: #6b4b21; font-size: 14px; }
+
+      .snake-detail {
+        order: 3;
+        width: 100%;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        min-height: 0;
+        gap: 3px;
+        margin-bottom: 5px;
+        padding: 2px 7px 7px;
+        border: 0;
+        border-radius: 19px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.68));
+      }
+
+      .snake-detail-art {
+        width: 190px;
+        height: 190px;
+        margin-top: -5px;
+        border: 0;
+        border-radius: 0;
+        box-shadow: 0 10px 14px rgba(106, 67, 10, 0.17);
+        background-color: transparent;
+        background-image: url("assets/snake-mascots-menu-v5-alpha.png");
+        background-size: 400% 300%;
+      }
+
+      .snake-detail-copy { width: min(100%, 400px); padding: 2px 10px 5px; border-radius: 14px; background: rgba(255, 255, 255, 0.62); }
+      .snake-detail h3 { font-size: 25px; color: #2e6b24; text-align: center; }
+      .snake-detail dl { display: none; }
+      .snake-detail dt { color: #936322; }
+      .snake-detail dd { color: #4f4229; }
+
+      .reward-preview {
+        order: 4;
+        width: 100%;
+        grid-template-columns: 102px minmax(0, 1fr);
+        min-height: 92px;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        border: 3px solid #d69e29;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #14694e, #064235);
+      }
+
+      .reward-chest-art { width: 92px; height: 92px; }
+      .reward-preview strong { font-size: 17px; }
+      .reward-preview span { font-size: 12px; }
+
+      .reward-copy { min-width: 0; }
+      .reward-items {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      .reward-item {
+        min-height: 52px;
+        padding-top: 39px;
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        background-size: 34px 34px;
+        color: #fff6c7;
+        font-size: 10px !important;
+        font-weight: 900;
+        line-height: 1;
+        text-align: center;
+        text-shadow: 0 1px 0 #2b2b16;
+      }
+
+      .reward-candy { background-image: url("assets/reward-candy-contained.png"); }
+      .reward-gem { background-image: url("assets/reward-gem-contained.png"); }
+      .reward-grape { background-image: url("assets/reward-grape-contained.png"); }
+      .reward-apple { background-image: url("assets/reward-apple-contained.png"); }
+      .reward-star { background-image: url("assets/reward-star-contained.png"); }
+
+      .message-card .restart {
+        order: 5;
+        min-width: 170px;
+        min-height: 48px;
+        border: 3px solid #f8e98a;
+        border-radius: 15px;
+        background: linear-gradient(180deg, #31aaf7, #0968ca);
+        font-size: 19px;
+      }
+
+      .modal-card,
+      .history,
+      .feature-shop {
+        border: 4px solid #d6a330;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #fffdf2, #f4e0a8);
+        box-shadow: inset 0 0 0 2px #fff7cb, 0 14px 28px rgba(0, 31, 19, 0.42);
+      }
+
+      .modal-card h3,
+      .history h2,
+      .feature-shop h2 {
+        color: #66410e;
+        font-size: 19px;
+      }
+
+      .feature-item,
+      .task-item {
+        border: 2px solid rgba(214, 163, 48, 0.56);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .snake-option[aria-pressed="true"] .snake-avatar {
+        animation: selected-snake-breathe 1.7s ease-in-out infinite;
+      }
+
+      .reward-chest-art {
+        animation: reward-chest-glow 2.2s ease-in-out infinite;
+      }
+
+      .shop-use:not(:disabled) .shop-art {
+        animation: shop-item-bob 1.9s ease-in-out infinite;
+      }
+
+      .motion-reduced *,
+      .motion-reduced *::before,
+      .motion-reduced *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      @keyframes selected-snake-breathe {
+        0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 226, 82, 0)); }
+        50% { filter: drop-shadow(0 0 11px rgba(255, 226, 82, 0.95)); }
+      }
+
+      @keyframes reward-chest-glow {
+        0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 8px rgba(255, 223, 106, 0.56)); }
+        50% { transform: translateY(-3px) scale(1.035); filter: drop-shadow(0 0 15px rgba(255, 223, 106, 0.96)); }
+      }
+
+      @keyframes shop-item-bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+    }
+
+    @media (min-width: 901px) {
+      .board-stack { grid-template-rows: var(--board-size) 132px; }
+      .board-shop { padding: 8px 10px; }
+      .board-shop-list { gap: 8px; }
+      .shop-use {
+        position: relative;
+        min-height: 108px;
+        padding: 8px;
+        grid-template-columns: 62px minmax(0, 1fr);
+        grid-template-rows: auto minmax(24px, 1fr) auto;
+        column-gap: 8px;
+        row-gap: 3px;
+        justify-items: stretch;
+        border: 2px solid #e8b73b;
+        border-radius: 13px;
+        background: linear-gradient(180deg, #1b7663, #075145);
+        color: #fffdf2;
+        text-align: left;
+      }
+      .shop-use:disabled { background: linear-gradient(180deg, #496e63, #294e44); color: rgba(255, 253, 242, 0.82); }
+      .shop-art {
+        grid-row: 1 / 4;
+        width: 62px;
+        height: 62px;
+        align-self: center;
+        border: 0;
+        border-radius: 0;
+        background-image: url("assets/powerup-showcase-v4-contained.png");
+        background-size: 400% 100%;
+        background-color: transparent;
+        box-shadow: none;
+      }
+      .shop-name { display: block; font-size: 15px; line-height: 1; }
+      .shop-note { display: block; min-height: 25px; font-size: 10px; line-height: 1.15; font-weight: 800; color: #dfffd1; }
+      .shop-meta { display: flex; gap: 4px 6px; align-items: center; flex-wrap: wrap; font-size: 10px; }
+      .shop-price, .shop-count, .shop-state {
+        display: inline-flex;
+        min-height: 20px;
+        align-items: center;
+        padding: 2px 5px;
+        border-radius: 7px;
+        font-weight: 900;
+      }
+      .shop-price { background: #f7c94f; color: #573606; }
+      .shop-count { position: static; background: #1779c6; border: 1px solid #bfe8ff; color: #fff; }
+      .shop-state { background: rgba(255, 255, 255, 0.16); color: #fffdf2; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game" aria-label="贪吃蛇吃苹果游戏">
+    <section class="topbar">
+      <h1>SNAKE</h1>
+      <div class="player-bar" id="playerBar" aria-label="玩家选择">
+        <!-- 玩家头像由 JS 动态渲染 -->
+        <button class="player-edit" type="button" id="playerEdit" aria-label="修改当前玩家名字和头像" title="修改玩家">✎</button>
+        <button class="player-add" type="button" id="playerAdd" aria-label="新建玩家">+</button>
+      </div>
+      <div class="stats" aria-live="polite">
+        <div class="stat">
+          <span class="stat-art stat-art-trophy" aria-hidden="true"></span>
+          <span class="label">分数</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-art stat-art-crown" aria-hidden="true"></span>
+          <span class="label">最高分</span>
+          <span class="value" id="best">0</span>
+        </div>
+        <div class="stat round-stat">
+          <span class="label">局数</span>
+          <span class="value" id="roundCount">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-art stat-art-candy" aria-hidden="true"></span>
+          <span class="label">糖豆</span>
+          <span class="value" id="coinHud">0</span>
+        </div>
+        <div class="stat status-stat">
+          <span class="stat-art stat-art-snake" aria-hidden="true"></span>
+          <span class="label">当前</span>
+          <span class="value" id="currentSnakeHud">稳稳蛇</span>
+        </div>
+        <div class="stat status-stat">
+          <span class="stat-art stat-art-star" aria-hidden="true"></span>
+          <span class="label">等级 / 经验</span>
+          <span class="value" id="currentLevelHud">1级</span>
+          <span class="label" id="currentXpHud">0/100经验</span>
+        </div>
+      </div>
+      <button class="feature-toggle" type="button" id="featureToggle" aria-expanded="false" aria-controls="featurePanel">任务</button>
+      <button class="record-toggle" type="button" id="recordToggle" aria-expanded="false" aria-controls="historyPanel">记录</button>
+      <button class="motion-toggle" type="button" id="motionToggle" aria-pressed="false">动效</button>
+      <button class="restart" type="button" id="restart">重新开始</button>
+      <section class="feature-shop feature-popover" id="featurePanel" aria-label="任务面板" hidden>
+        <h2>任务</h2>
+        <p class="feature-balance">可用糖豆：<strong id="featureCoins">0</strong></p>
+        <div class="adventure-panel">
+          <strong>本局果园挑战</strong>
+          <span id="roundMissionText">开始后抽取挑战</span>
+          <span id="roundEventText">本局果园：普通果园</span>
+        </div>
+        <div class="task-list" id="taskList"></div>
+        <h2 class="adventure-heading">每日任务</h2>
+        <div class="task-list" id="dailyTaskList"></div>
+        <h2 class="adventure-heading">收藏册</h2>
+        <div class="collection-list" id="collectionList"></div>
+      </section>
+      <section class="history history-popover" id="historyPanel" aria-label="每局分数记录" hidden>
+        <h2>每局记录</h2>
+        <ul class="history-list" id="historyList"></ul>
+        <p class="history-empty" id="historyEmpty">还没有记录。</p>
+      </section>
+    </section>
+
+    <section class="play-layout" aria-label="游戏和小蛇选择">
+      <div class="snake-column snake-column-left" aria-label="左侧小蛇选择">
+        <button class="snake-option" type="button" data-snake="sprout" aria-pressed="true">
+          <span class="snake-avatar sprout" aria-hidden="true">😊</span>
+          <span>
+            <span class="snake-name">稳稳蛇</span>
+            <span class="snake-level" data-level-for="sprout">1级</span>
+            <span class="snake-xp" data-xp-for="sprout">0/100经验</span>
+            <span class="snake-skill">速度很慢，最容易控制。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="apple" aria-pressed="false">
+          <span class="snake-avatar apple" aria-hidden="true">🍎</span>
+          <span>
+            <span class="snake-name">苹果蛇</span>
+            <span class="snake-level" data-level-for="apple">1级</span>
+            <span class="snake-xp" data-xp-for="apple">0/100经验</span>
+            <span class="snake-skill">吃苹果得分更多。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="spark" aria-pressed="false">
+          <span class="snake-avatar spark" aria-hidden="true">⚡</span>
+          <span>
+            <span class="snake-name">闪闪蛇</span>
+            <span class="snake-level" data-level-for="spark">1级</span>
+            <span class="snake-xp" data-xp-for="spark">0/100经验</span>
+            <span class="snake-skill">跑得快，适合挑战。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="berry" aria-pressed="false">
+          <span class="snake-avatar berry" aria-hidden="true">🫐</span>
+          <span>
+            <span class="snake-name">蓝莓蛇</span>
+            <span class="snake-level" data-level-for="berry">1级</span>
+            <span class="snake-xp" data-xp-for="berry">0/100经验</span>
+            <span class="snake-skill">速度中等，分数也稳定。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="coin" aria-pressed="false">
+          <span class="snake-avatar coin" aria-hidden="true">⭐</span>
+          <span>
+            <span class="snake-name">星星蛇</span>
+            <span class="snake-level" data-level-for="coin">1级</span>
+            <span class="snake-xp" data-xp-for="coin">0/100经验</span>
+            <span class="snake-skill">得分最高，但要小心。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="rainbow" aria-pressed="false">
+          <span class="snake-avatar rainbow" aria-hidden="true">🌈</span>
+          <span>
+            <span class="snake-name">彩虹蛇</span>
+            <span class="snake-level" data-level-for="rainbow">1级</span>
+            <span class="snake-xp" data-xp-for="rainbow">0/100经验</span>
+            <span class="snake-skill">速度轻快，身体会变色。</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="board-stack">
+        <section class="board-wrap">
+          <span class="board-corner board-corner-nw" aria-hidden="true"></span>
+          <span class="board-corner board-corner-ne" aria-hidden="true"></span>
+          <span class="board-corner board-corner-sw" aria-hidden="true"></span>
+          <span class="board-corner board-corner-se" aria-hidden="true"></span>
+          <canvas id="board" width="1300" height="1300" aria-label="贪吃蛇游戏区域"></canvas>
+          <div class="message" id="message">
+            <div class="message-card">
+              <strong id="messageTitle">先选一条小蛇</strong>
+              <p id="messageText">现在选中：稳稳蛇。按开始后去吃苹果吧！</p>
+              <div class="reward-preview" aria-label="本局奖励预览">
+                <span class="reward-chest-art" aria-hidden="true"></span>
+                <div class="reward-copy">
+                  <strong>宝箱奖励已准备好</strong>
+                  <span>每局结束都能打开宝箱，领取额外糖豆。</span>
+                  <div class="reward-items" aria-label="奖励物品">
+                    <span class="reward-item reward-candy" aria-label="糖果十个">x10</span>
+                    <span class="reward-item reward-gem" aria-label="宝石五个">x5</span>
+                    <span class="reward-item reward-grape" aria-label="葡萄八串">x8</span>
+                    <span class="reward-item reward-apple" aria-label="苹果六个">x6</span>
+                    <span class="reward-item reward-star" aria-label="星币五百个">x500</span>
+                  </div>
+                </div>
+              </div>
+              <div class="snake-detail" id="snakeDetail" aria-label="当前小蛇详情">
+                <span class="snake-detail-art sprout" aria-hidden="true"></span>
+                <div class="snake-detail-copy">
+                  <h3>稳稳蛇</h3>
+                  <dl>
+                    <dt>特点</dt><dd data-detail-role="note">速度很慢，最容易控制。</dd>
+                    <dt>等级</dt><dd data-detail-role="level">1级</dd>
+                    <dt>经验</dt><dd data-detail-role="xp">0/100经验</dd>
+                    <dt>奖励</dt><dd data-detail-role="reward">1级：普通成长</dd>
+                  </dl>
+                </div>
+              </div>
+              <div class="chest-choice-list" id="chestChoices" hidden aria-label="礼盒奖励选择"></div>
+              <button class="restart" type="button" id="start">开始游戏</button>
+            </div>
+          </div>
+        </section>
+        <section class="board-shop" aria-label="局内功能工具栏">
+          <div class="board-shop-list" id="boardShopList"></div>
+        </section>
+      </div>
+
+      <div class="snake-column snake-column-right" aria-label="右侧小蛇选择">
+        <button class="snake-option" type="button" data-snake="flower" aria-pressed="false">
+          <span class="snake-avatar flower" aria-hidden="true">🌸</span>
+          <span>
+            <span class="snake-name">花花蛇</span>
+            <span class="snake-level" data-level-for="flower">1级</span>
+            <span class="snake-xp" data-xp-for="flower">0/100经验</span>
+            <span class="snake-skill">吃糖果奖励更多。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="cloud" aria-pressed="false">
+          <span class="snake-avatar cloud" aria-hidden="true">☁️</span>
+          <span>
+            <span class="snake-name">云朵蛇</span>
+            <span class="snake-level" data-level-for="cloud">1级</span>
+            <span class="snake-xp" data-xp-for="cloud">0/100经验</span>
+            <span class="snake-skill">速度柔和，适合练习。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="gem" aria-pressed="false">
+          <span class="snake-avatar gem" aria-hidden="true">💎</span>
+          <span>
+            <span class="snake-name">宝石蛇</span>
+            <span class="snake-level" data-level-for="gem">1级</span>
+            <span class="snake-xp" data-xp-for="gem">0/100经验</span>
+            <span class="snake-skill">分数高，节奏偏快。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="candy" aria-pressed="false">
+          <span class="snake-avatar candy" aria-hidden="true">🍬</span>
+          <span>
+            <span class="snake-name">糖果蛇</span>
+            <span class="snake-level" data-level-for="candy">1级</span>
+            <span class="snake-xp" data-xp-for="candy">0/100经验</span>
+            <span class="snake-skill">更容易积累糖豆。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="ocean" aria-pressed="false">
+          <span class="snake-avatar ocean" aria-hidden="true">🌊</span>
+          <span>
+            <span class="snake-name">海浪蛇</span>
+            <span class="snake-level" data-level-for="ocean">1级</span>
+            <span class="snake-xp" data-xp-for="ocean">0/100经验</span>
+            <span class="snake-skill">速度稳定，转向顺。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="fire" aria-pressed="false">
+          <span class="snake-avatar fire" aria-hidden="true">🔥</span>
+          <span>
+            <span class="snake-name">火焰蛇</span>
+            <span class="snake-level" data-level-for="fire">1级</span>
+            <span class="snake-xp" data-xp-for="fire">0/100经验</span>
+            <span class="snake-skill">速度最快，分数刺激。</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="quick-help" aria-label="游戏提示">
+        <span>红苹果+10 | 金苹果+30 | 蓝苹果减速 | 紫苹果变短</span>
+        <div class="theme-switcher" id="themeSwitcher" aria-label="主题切换"></div>
+        <div class="controls" aria-label="方向按钮">
+          <button class="control" type="button" data-dir="up" aria-label="向上">↑</button>
+          <button class="control" type="button" data-dir="left" aria-label="向左">←</button>
+          <button class="control" type="button" data-dir="down" aria-label="向下">↓</button>
+          <button class="control" type="button" data-dir="right" aria-label="向右">→</button>
+        </div>
+    </section>
+
+    <!-- 玩家新建/编辑弹窗 -->
+    <div class="modal" id="playerModal" hidden>
+      <div class="modal-card">
+        <h3 id="playerModalTitle">新建玩家</h3>
+        <input type="text" id="playerNameInput" placeholder="输入名字（最多8字）" maxlength="8">
+        <div class="avatar-picker" id="avatarPicker"></div>
+        <div class="modal-actions">
+          <button class="restart danger" type="button" id="playerDeleteBtn" hidden>删除此玩家</button>
+          <button class="restart" type="button" id="playerSaveBtn">保存</button>
+          <button class="record-toggle" type="button" id="playerCancelBtn">取消</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* =========================================================================
+       贪吃蛇吃苹果 · 阶段0 地基重构
+       分层：CONFIG / STATE / DOM / LOGIC / RENDER / INPUT / LOOP / INIT
+       目标：把散乱的全局变量收敛成 state，引入固定步长循环和明确阶段，
+             为阶段1~5（视觉重做 / 障碍技能 / 连击关卡 / 任务成就 / 商店）铺路。
+       本阶段外观与玩法完全保持不变，localStorage 三个 key 不变。
+       ========================================================================= */
+
+    /* ---- CONFIG：静态配置（不变量，便于后续阶段扩展） ---- */
+    const CONFIG = {
+      cells: 26,
+      appleCount: 12,
+      assetPaths: {
+        arenaBackground: "assets/orchard-royal-bg-v3.png",
+        rewardChests: "assets/reward-chests-transparent.png",
+        powerupIcons: "assets/powerup-icons-transparent.png",
+        powerupIconsV2: "assets/powerup-icons-v2.png",
+        snakePortraitsV2: "assets/snake-portraits-v2.png",
+        snakePortraitsCrisp: "assets/snake-portraits-royal-v3-crisp.png",
+        snakeSidePortraitsV6: "assets/snake-side-portraits-v6-alpha.png",
+        snakeSidePortraitsV7Contained: "assets/snake-side-portraits-v7-contained.png",
+        orchardBoardDecorV1: "assets/orchard-board-decor-v1-alpha.png",
+        snakeMascotsDemoV4: "assets/snake-mascots-demo-v4-alpha.png",
+        snakeMascotsMenuV5: "assets/snake-mascots-menu-v5-alpha.png",
+        boardSnakeNecksV1: "assets/board-snake-necks-v1-alpha.png",
+        hudIconsDemoV4: "assets/hud-icons-demo-v4-alpha.png",
+        hudIconsDemoV5Contained: "assets/hud-icons-demo-v5-contained.png",
+        powerupShowcaseV4Contained: "assets/powerup-showcase-v4-contained.png",
+        rewardCandyContained: "assets/reward-candy-contained.png",
+        rewardGemContained: "assets/reward-gem-contained.png",
+        rewardGrapeContained: "assets/reward-grape-contained.png",
+        rewardAppleContained: "assets/reward-apple-contained.png",
+        rewardStarContained: "assets/reward-star-contained.png",
+        rewardUi: "assets/reward-ui-kit-transparent.png"
+      },
+      treatSprites: {
+        normal: { col: 0, row: 3 },
+        gold: { col: 2, row: 0 },
+        slow: { col: 3, row: 0 },
+        shrink: { col: 2, row: 1 }
+      },
+      levelThresholds: [0, 100, 250, 500, 900, 1400, 2000, 2700, 3500, 4400, 5400, 6500, 7700, 9000, 10400, 11900, 13500, 15200, 17000, 18900],
+      appleTypes: [
+        { id: "normal", name: "红苹果", points: 10, chance: 0.7, fill: "#e92f2f", stroke: "#9b1118", light: "#ff6b6b", sparkle: "#fff" },
+        { id: "gold", name: "金苹果", points: 30, chance: 0.12, fill: "#ffd447", stroke: "#a76300", light: "#fff099", sparkle: "#fff6a6" },
+        { id: "slow", name: "蓝苹果", points: 10, chance: 0.1, fill: "#45b8ff", stroke: "#1452b8", light: "#8fd6ff", sparkle: "#d9f5ff", effect: "slow" },
+        { id: "shrink", name: "紫苹果", points: 6, chance: 0.08, fill: "#9b5cff", stroke: "#5a2ca0", light: "#c8a0ff", sparkle: "#f1e6ff", effect: "shrink" }
+      ],
+      levelRewards: [
+        { level: 1, name: "普通成长", note: "正常开始，练习路线。" },
+        { level: 2, name: "身体更亮", note: "小蛇身体出现柔光，更容易看见。" },
+        { level: 3, name: "开局糖豆", note: "每局开始额外获得 5 糖豆。", startCandyBonus: 5 },
+        { level: 4, name: "奖励特效", note: "吃苹果时有更大的奖励特效。", bonusEffect: true },
+        { level: 5, name: "专属皮肤", note: "小蛇头部解锁星光皮肤。", skinUnlocked: true },
+        { level: 10, name: "高级成长", note: "分数倍率继续提高，升级更有成就感。" },
+        { level: 15, name: "大师光环", note: "高等级小蛇拥有更亮的光效。" },
+        { level: 20, name: "满级传说", note: "达到最高 20 级，成为真正的蛇王。" }
+      ],
+      snakeTypes: [
+        { id: "sprout", name: "稳稳蛇", tickMs: 380, scoreMultiplier: 1, head: "#9eff7a", body: "#67d92a", stroke: "#19731e", light: "#c8ff9a", sparkle: "#dfff7a", note: "速度很慢，最容易控制。" },
+        { id: "apple", name: "苹果蛇", tickMs: 330, scoreMultiplier: 1.5, head: "#ffbd80", body: "#ffbd54", stroke: "#b74f24", light: "#ffe1b0", sparkle: "#fff1a8", note: "吃苹果得分更多。" },
+        { id: "spark", name: "闪闪蛇", tickMs: 260, scoreMultiplier: 1.2, head: "#7fdfff", body: "#357aff", stroke: "#1452b8", light: "#b8edff", sparkle: "#fff36a", note: "跑得快，适合挑战。" },
+        { id: "berry", name: "蓝莓蛇", tickMs: 320, scoreMultiplier: 1.1, head: "#8fd6ff", body: "#4b88ff", stroke: "#1d4ca8", light: "#c8e8ff", sparkle: "#d9f5ff", note: "速度中等，分数也稳定。" },
+        { id: "coin", name: "星星蛇", tickMs: 300, scoreMultiplier: 1.8, head: "#ffe680", body: "#f0a713", stroke: "#a76300", light: "#fff3b0", sparkle: "#fff6a6", note: "得分最高，但要小心。" },
+        { id: "rainbow", name: "彩虹蛇", tickMs: 285, scoreMultiplier: 1.3, head: "#ff8fa0", body: "#45b8ff", stroke: "#7540b8", light: "#ffc4cc", sparkle: "#fff", note: "速度轻快，身体会变色。" },
+        { id: "flower", name: "花花蛇", tickMs: 340, scoreMultiplier: 1.15, head: "#ffc4df", body: "#ff6fae", stroke: "#b82e68", light: "#ffe1ef", sparkle: "#fff6a6", note: "吃糖果奖励更多。" },
+        { id: "cloud", name: "云朵蛇", tickMs: 360, scoreMultiplier: 1.05, head: "#f5fbff", body: "#8fd6ff", stroke: "#3a7fb8", light: "#ffffff", sparkle: "#d9f5ff", note: "速度柔和，适合练习。" },
+        { id: "gem", name: "宝石蛇", tickMs: 275, scoreMultiplier: 1.55, head: "#e4c8ff", body: "#8b5cff", stroke: "#5a2ca0", light: "#f1e6ff", sparkle: "#fff6ff", note: "分数高，节奏偏快。" },
+        { id: "candy", name: "糖果蛇", tickMs: 315, scoreMultiplier: 1.25, head: "#fff099", body: "#ff8fce", stroke: "#b84a85", light: "#fffbe8", sparkle: "#fff6a6", note: "更容易积累糖豆。" },
+        { id: "ocean", name: "海浪蛇", tickMs: 305, scoreMultiplier: 1.2, head: "#7fffe2", body: "#138ce8", stroke: "#0b5798", light: "#b8fff0", sparkle: "#d9f5ff", note: "速度稳定，转向顺。" },
+        { id: "fire", name: "火焰蛇", tickMs: 245, scoreMultiplier: 1.6, head: "#ffe779", body: "#ff5f35", stroke: "#a83212", light: "#fff099", sparkle: "#fff6a6", note: "速度最快，分数刺激。" }
+      ],
+      shopItems: [
+        { id: "magnet", cost: 60, note: "20秒内自动吸来附近苹果。" },
+        { id: "shield", cost: 80, note: "撞到自己或边界时保护一次。" },
+        { id: "feast", cost: 100, note: "立刻落下 5 个金苹果。" },
+        { id: "slowTime", cost: 50, note: "8秒慢动作，更容易转向。" }
+      ],
+      shopDurations: {
+        magnet: 20000,
+        slowTime: 8000
+      },
+      chestRewards: {
+        baseCandy: 20,
+        scoreDivisor: 10,
+        minCandy: 20,
+        maxCandy: 180
+      },
+      boardPowerupLimit: 5,
+      boardPowerupTypes: [
+        { id: "candy", name: "糖果", action: "candy", chance: 0.28, amount: 20, bonusScore: 0, artCol: 1, artRow: 1, color: "#ffd447", note: "吃到后获得 20 糖豆。" },
+        { id: "magnet", name: "糖果磁铁", shopName: "磁铁", action: "magnet", chance: 0.16, bonusScore: 5, artCol: 0, artRow: 0, color: "#ff5f6d", note: "吃到后开启糖果磁铁，并获得 5 分。" },
+        { id: "jelly", name: "果冻", action: "jelly", chance: 0.18, bonusScore: 10, artCol: 0, artRow: 1, color: "#8b5cff", note: "吃到后身体变短一点，并获得 10 分。" },
+        { id: "shield", name: "护盾", action: "shield", chance: 0.14, bonusScore: 5, artCol: 1, artRow: 0, color: "#45b8ff", note: "吃到后获得一次护盾，并获得 5 分。" },
+        { id: "feast", name: "金苹果雨", shopName: "苹果雨", action: "feast", chance: 0.12, bonusScore: 10, artCol: 2, artRow: 0, color: "#ffd447", note: "吃到后落下 5 个金苹果，并获得 10 分。" },
+        { id: "slowTime", name: "慢动作", action: "slowTime", chance: 0.12, bonusScore: 5, artCol: 2, artRow: 1, color: "#45b8ff", note: "吃到后小蛇短时间变慢，并获得 5 分。" }
+      ],
+      tasks: [
+        { id: "eat5", name: "吃 5 个苹果", goal: 5, reward: 25, metric: "applesEaten" },
+        { id: "score100", name: "得到 100 分", goal: 100, reward: 40, metric: "score" },
+        { id: "survive30", name: "坚持 30 秒", goal: 30, reward: 35, metric: "seconds" }
+      ],
+      roundMissions: [
+        { id: "orchard8", name: "果园小食家", note: "吃到 8 个苹果", metric: "applesEaten", goal: 8, reward: 35 },
+        { id: "combo6", name: "连吃高手", note: "达成 6 连吃", metric: "bestCombo", goal: 6, reward: 45 },
+        { id: "power2", name: "道具探险家", note: "吃到 2 个棋盘道具", metric: "powerups", goal: 2, reward: 40 },
+        { id: "score250", name: "果园冲分", note: "本局获得 250 分", metric: "score", goal: 250, reward: 55 }
+      ],
+      roundEvents: [
+        { id: "calm", name: "普通果园", note: "苹果和道具正常出现。" },
+        { id: "harvest", name: "大丰收", note: "场上的苹果更多。", appleBonus: 4 },
+        { id: "slowBreeze", name: "慢时光", note: "小蛇略微变慢，更容易转向。", speedFactor: 1.14 },
+        { id: "streakStorm", name: "果汁狂欢", note: "连吃奖励更高。", comboBonus: 1 }
+      ],
+      mapRotation: [
+        { id: "spring", name: "春日果园", themeId: "orchard" },
+        { id: "moon", name: "月光蓝莓谷", themeId: "moonlit" },
+        { id: "snow", name: "糖霜花园", themeId: "snow" }
+      ],
+      dailyTasks: [
+        { id: "dailyApples", name: "每日吃果", metric: "apples", goal: 25, reward: 80 },
+        { id: "dailyGold", name: "追到金苹果", metric: "goldens", goal: 2, reward: 90 },
+        { id: "dailyBoss", name: "挑战果园首领", metric: "bosses", goal: 1, reward: 120 }
+      ],
+      chestChoices: [
+        { id: "shield", name: "护盾", note: "获得一次护盾" },
+        { id: "feast", name: "苹果雨", note: "落下 5 个金苹果" },
+        { id: "candy", name: "糖豆", note: "获得 50 糖豆", amount: 50 },
+        { id: "magnet", name: "磁铁", note: "开启糖果磁铁" }
+      ],
+      collectionItems: [
+        { id: "golden", name: "金苹果猎手", mark: "金" },
+        { id: "chest", name: "藤蔓礼盒", mark: "箱" },
+        { id: "boss", name: "首领徽章", mark: "王" },
+        { id: "combo", name: "连吃徽章", mark: "连" }
+      ],
+      visualScale: {
+        snakeRadius: 0.42,
+        headScale: 1.04,
+        treatRadius: 0.44,
+        sparkleScale: 0.85
+      },
+      targetHint: {
+        fill: "rgba(255, 255, 255, 0.48)",
+        stroke: "rgba(31, 124, 43, 0.38)",
+        center: "rgba(31, 124, 43, 0.44)"
+      },
+      themes: [
+        {
+          id: "orchard", name: "果园",
+          boardLight: "#d9f4ad", boardDark: "#d3efa6",
+          boardBorder: "#176c25", boardInner: "#55b929",
+          grid: "rgba(112, 158, 70, 0.055)",
+          wood: "#8b5a2b", woodDark: "#6c3611"
+        },
+        {
+          id: "moonlit", name: "月夜",
+          boardLight: "#3a4a7a", boardDark: "#2d3a66",
+          boardBorder: "#1a2244", boardInner: "#4a5a8a",
+          grid: "rgba(150,170,220,0.15)",
+          wood: "#4a3a6a", woodDark: "#2a1a44"
+        },
+        {
+          id: "snow", name: "雪地",
+          boardLight: "#f0f5ff", boardDark: "#dde8f5",
+          boardBorder: "#6a8aa8", boardInner: "#8aaac8",
+          grid: "rgba(120,150,180,0.18)",
+          wood: "#7a5a3a", woodDark: "#5a3a1a"
+        }
+      ],
+      storageKeys: {
+        // 旧版单份存档 key（仅用于一次性迁移，迁移后保留不删作为兜底）
+        legacyBest: "snake-best-score",
+        legacyHistory: "snake-round-history",
+        legacyProgress: "snake-progress",
+        // 新版多玩家总存档 key
+        players: "snake-players"
+      },
+      players: {
+        maxCount: 4,                          // 玩家档案上限
+        defaultAvatars: ["🦊", "🐰", "🐯", "🐼", "🐸", "🦁", "🐨", "🐵"]
+      }
+    };
+
+    /* ---- STATE：单一状态对象，替代散落的全局变量 ----
+       注意：selectedSnakeType 在 DOM 缓存之后用 SNAKE_TYPE_BY_ID 初始化，
+             见下方"派生常量与状态补全"段。这里先给出占位。 */
+    const state = {
+      phase: "menu",                       // 当前游戏阶段 menu|playing|paused|gameover
+      snake: {
+        body: [],                          // [{x,y}...]，body[0] 是头
+        direction: { x: 1, y: 0 },         // 当前实际方向
+        nextDirection: { x: 1, y: 0 }      // 缓冲方向，下个 tick 生效（防反向自杀）
+      },
+      apples: [],                          // [{x,y,type}]
+      boardPowerups: [],                   // [{x,y,type}]
+      obstacles: [],                       // 阶段2 填充，先留空
+      score: 0,
+      best: 0,
+      coins: 0,
+      roundHistory: [],                    // 当前激活玩家的历史（运行时镜像）
+      progress: {},                        // 当前激活玩家的各蛇经验 { snakeId: xp }
+      tasks: { completed: {}, progress: {} },
+      roundStats: { applesEaten: 0, startedAt: 0, seconds: 0 },
+      players: {},                         // 全部玩家档案 { id: playerObj }
+      activePlayerId: null,                // 当前激活玩家 id
+      themeId: "orchard",                  // 当前主题 id（默认果园）
+      selectedSnakeType: null,             // 在派生常量段补全
+      timing: {
+        tickMs: 0,                         // 当前步长（受蓝苹果减速影响）
+        accumulator: 0,                    // 固定步长累加器
+        lastFrameAt: 0,                    // 上一帧时间戳
+        speedEffectUntil: 0,               // 减速效果到期时间戳（0=无效果）
+        pauseStartedAt: 0                  // 暂停开始时间，用于冻结限时功能
+      },
+      powerups: {
+        magnetUntil: 0,
+        shieldCharges: 0
+      },
+      pendingShopItems: {},
+      pendingChest: null,
+      combo: { count: 0, expireAt: 0 },    // 阶段3 用
+      roundMission: null,
+      roundEvent: null,
+      roundMap: null,
+      goldenRunner: null,
+      mysteryChest: null,
+      chestChoices: null,
+      boss: null,
+      daily: { date: "", progress: {}, completed: {} },
+      collection: {},
+      talent: { safeTurnCharges: 0, firePassCharges: 0 },
+      skill: { cooldownUntil: 0, activeUntil: 0 },  // 阶段2 用
+      effects: []                          // 阶段1 粒子/飘字队列
+    };
+
+    /* ---- DOM：缓存所有节点引用（必须在派生常量之前，因为 CELL_SIZE 依赖 canvas.width） ---- */
+    const canvas = document.querySelector("#board");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      canvas,
+      ctx,
+      score: document.querySelector("#score"),
+      best: document.querySelector("#best"),
+      roundCount: document.querySelector("#roundCount"),
+      coinHud: document.querySelector("#coinHud"),
+      currentSnakeHud: document.querySelector("#currentSnakeHud"),
+      currentSnakeArt: document.querySelector(".stat-art-snake"),
+      currentLevelHud: document.querySelector("#currentLevelHud"),
+      currentXpHud: document.querySelector("#currentXpHud"),
+      recordToggle: document.querySelector("#recordToggle"),
+      featureToggle: document.querySelector("#featureToggle"),
+      featurePanel: document.querySelector("#featurePanel"),
+      featureCoins: document.querySelector("#featureCoins"),
+      roundMissionText: document.querySelector("#roundMissionText"),
+      roundEventText: document.querySelector("#roundEventText"),
+      dailyTaskList: document.querySelector("#dailyTaskList"),
+      collectionList: document.querySelector("#collectionList"),
+      boardShopList: document.querySelector("#boardShopList"),
+      taskList: document.querySelector("#taskList"),
+      historyPanel: document.querySelector("#historyPanel"),
+      historyList: document.querySelector("#historyList"),
+      historyEmpty: document.querySelector("#historyEmpty"),
+      message: document.querySelector("#message"),
+      messageTitle: document.querySelector("#messageTitle"),
+      messageText: document.querySelector("#messageText"),
+      snakeDetail: document.querySelector("#snakeDetail"),
+      chestChoices: document.querySelector("#chestChoices"),
+      startButton: document.querySelector("#start"),
+      restartButton: document.querySelector("#restart"),
+      motionToggle: document.querySelector("#motionToggle"),
+      controls: document.querySelectorAll(".control"),
+      snakeOptionButtons: document.querySelectorAll(".snake-option"),
+      playerBar: document.querySelector("#playerBar"),
+      playerEdit: document.querySelector("#playerEdit"),
+      playerAdd: document.querySelector("#playerAdd"),
+      playerModal: document.querySelector("#playerModal"),
+      playerModalTitle: document.querySelector("#playerModalTitle"),
+      playerNameInput: document.querySelector("#playerNameInput"),
+      avatarPicker: document.querySelector("#avatarPicker"),
+      playerSaveBtn: document.querySelector("#playerSaveBtn"),
+      playerCancelBtn: document.querySelector("#playerCancelBtn"),
+      playerDeleteBtn: document.querySelector("#playerDeleteBtn"),
+      themeSwitcher: document.querySelector("#themeSwitcher")
+    };
+
+    /* ---- 派生常量（依赖 canvas，故放在 DOM 缓存之后） ---- */
+    const CELL_SIZE = els.canvas.width / CONFIG.cells;
+    function cellRect(cell) {
+      return {
+        x: cell.x * CELL_SIZE,
+        y: cell.y * CELL_SIZE,
+        width: CELL_SIZE,
+        height: CELL_SIZE
+      };
+    }
+
+    function cellCenter(cell) {
+      const rect = cellRect(cell);
+      const centerX = rect.x + rect.width / 2;
+      const centerY = rect.y + rect.height / 2;
+      return {
+        x: centerX,
+        y: centerY,
+        cx: centerX,
+        cy: centerY
+      };
+    }
+
+    const APPLE_TYPE_BY_ID = Object.fromEntries(CONFIG.appleTypes.map(t => [t.id, t]));
+    const BOARD_POWERUP_BY_ID = Object.fromEntries(CONFIG.boardPowerupTypes.map(t => [t.id, t]));
+    const SNAKE_TYPE_BY_ID = Object.fromEntries(CONFIG.snakeTypes.map(t => [t.id, t]));
+    const gameImages = {};
+    const DIR_VECTORS = {
+      up: { x: 0, y: -1 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+      right: { x: 1, y: 0 }
+    };
+    // 状态补全：默认选中蛇（依赖 SNAKE_TYPE_BY_ID）
+    state.selectedSnakeType = SNAKE_TYPE_BY_ID.sprout;
+
+    function loadGameImages() {
+      Object.entries(CONFIG.assetPaths).forEach(([key, src]) => {
+        const img = new Image();
+        img.onload = () => render();
+        img.src = src;
+        gameImages[key] = img;
+      });
+    }
+
+    function isImageReady(img) {
+      return Boolean(img && img.complete && img.naturalWidth > 0);
+    }
+
+    function spritePosition(col, row) {
+      const pct = value => `${value >= 3 ? 100 : value * 33.333}%`;
+      return `${pct(col)} ${pct(row)}`;
+    }
+
+    function powerupSpritePosition(type) {
+      const x = type.artCol >= 2 ? 100 : type.artCol * 50;
+      const y = type.artRow >= 1 ? 100 : 0;
+      return `${x}% ${y}%`;
+    }
+
+    function shopShowcaseSpritePosition(itemId) {
+      const positions = { magnet: "0% 0%", shield: "33.333% 0%", feast: "66.666% 0%", slowTime: "100% 0%" };
+      return positions[itemId] || "0% 0%";
+    }
+
+    /* =========================================================================
+       LOGIC 层：纯游戏逻辑，尽量不碰 DOM
+       ========================================================================= */
+
+    /* ---- 玩家档案存档（多玩家隔离） ----
+       存档结构（localStorage["snake-players"]）：
+       { version, activeId, players: { id: { id, name, avatar, best, roundHistory, progress, lastSnakeId, createdAt } } }
+       state.best / roundHistory / progress 始终是"当前激活玩家"的运行时镜像，
+       任何修改通过 savePlayers() 整体落盘。 */
+    function loadPlayers() {
+      const raw = localStorage.getItem(CONFIG.storageKeys.players);
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          if (data && data.players && data.activeId && data.players[data.activeId]) {
+            return data;
+          }
+        } catch (e) { /* 损坏则走迁移/新建 */ }
+      }
+      return null;
+    }
+
+    /* 老版单份存档 → 新版多玩家结构的一次性迁移 */
+    function migrateLegacyPlayers() {
+      const legacyBest = Number(localStorage.getItem(CONFIG.storageKeys.legacyBest) || 0);
+      const legacyHistory = JSON.parse(localStorage.getItem(CONFIG.storageKeys.legacyHistory) || "[]");
+      const legacyProgress = JSON.parse(localStorage.getItem(CONFIG.storageKeys.legacyProgress) || "{}");
+      const now = Date.now();
+      const id = "p1";
+      return {
+        version: 1,
+        activeId: id,
+        players: {
+          [id]: {
+            id,
+            name: "玩家1",
+            avatar: "🦊",
+            best: legacyBest,
+            coins: 0,
+            roundHistory: legacyHistory,
+            progress: legacyProgress,
+            tasks: { completed: {}, progress: {} },
+            daily: { date: "", progress: {}, completed: {} },
+            collection: {},
+            pendingShopItems: {},
+            lastSnakeId: "sprout",
+            themeId: "orchard",
+            createdAt: now
+          }
+        }
+      };
+    }
+
+    function newDefaultPlayer(id, name, avatar) {
+      return {
+        id,
+        name: name || "玩家",
+        avatar: avatar || "🦊",
+        best: 0,
+        coins: 0,
+        roundHistory: [],
+        progress: {},
+        tasks: { completed: {}, progress: {} },
+        daily: { date: "", progress: {}, completed: {} },
+        collection: {},
+        pendingShopItems: {},
+        lastSnakeId: "sprout",
+        themeId: "orchard",
+        createdAt: Date.now()
+      };
+    }
+
+    function savePlayers() {
+      const data = {
+        version: 1,
+        activeId: state.activePlayerId,
+        players: state.players
+      };
+      localStorage.setItem(CONFIG.storageKeys.players, JSON.stringify(data));
+    }
+
+    /* 把指定玩家的存档灌进 state 运行时字段（切换玩家时调用） */
+    function applyPlayerToState(playerId) {
+      const p = state.players[playerId];
+      if (!p) return;
+      state.activePlayerId = playerId;
+      state.best = p.best;
+      state.coins = Number(p.coins || 0);
+      state.roundHistory = p.roundHistory;
+      state.progress = p.progress;
+      state.tasks = p.tasks || { completed: {}, progress: {} };
+      state.daily = p.daily || { date: "", progress: {}, completed: {} };
+      state.collection = p.collection || {};
+      state.pendingShopItems = p.pendingShopItems || {};
+      state.selectedSnakeType = SNAKE_TYPE_BY_ID[p.lastSnakeId] || SNAKE_TYPE_BY_ID.sprout;
+      state.themeId = "orchard";
+    }
+
+    /* loadStorage：读或迁移玩家档案，并把激活玩家灌进 state */
+    function loadStorage() {
+      let data = loadPlayers();
+      if (!data) {
+        // 无新版存档：检查是否有旧版单份存档需要迁移
+        const hasLegacy =
+          localStorage.getItem(CONFIG.storageKeys.legacyBest) !== null ||
+          localStorage.getItem(CONFIG.storageKeys.legacyHistory) !== null ||
+          localStorage.getItem(CONFIG.storageKeys.legacyProgress) !== null;
+        data = hasLegacy ? migrateLegacyPlayers() : {
+          version: 1,
+          activeId: "p1",
+          players: { p1: newDefaultPlayer("p1", "玩家1", "🦊") }
+        };
+        state.players = data.players;
+        state.activePlayerId = data.activeId;
+        savePlayers(); // 首次落盘
+      } else {
+        state.players = data.players;
+        state.activePlayerId = data.activeId;
+      }
+      Object.values(state.players).forEach(player => {
+        if (player.coins === undefined) player.coins = 0;
+        if (!player.themeId) player.themeId = "orchard";
+        if (!player.tasks) player.tasks = { completed: {}, progress: {} };
+        if (!player.tasks.completed) player.tasks.completed = {};
+        if (!player.tasks.progress) player.tasks.progress = {};
+        if (!player.pendingShopItems) player.pendingShopItems = {};
+        if (!player.daily) player.daily = { date: "", progress: {}, completed: {} };
+        if (!player.daily.progress) player.daily.progress = {};
+        if (!player.daily.completed) player.daily.completed = {};
+        if (!player.collection) player.collection = {};
+      });
+      applyPlayerToState(state.activePlayerId);
+    }
+
+    /* ---- 单字段保存：写回当前激活玩家并整体落盘 ---- */
+    function saveBest() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].best = state.best;
+        savePlayers();
+      }
+    }
+
+    function saveHistory() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].roundHistory = state.roundHistory;
+        savePlayers();
+      }
+    }
+
+    function saveCoins() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].coins = state.coins;
+        // Persisted path: players[state.activePlayerId].coins
+        savePlayers();
+      }
+    }
+
+    function saveProgress() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].progress = state.progress;
+        savePlayers();
+      }
+    }
+
+    function saveTasks() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].tasks = state.tasks;
+        savePlayers();
+      }
+    }
+
+    function saveAdventure() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].daily = state.daily;
+        state.players[state.activePlayerId].collection = state.collection;
+        savePlayers();
+      }
+    }
+
+    function savePendingShopItems() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].pendingShopItems = state.pendingShopItems;
+        savePlayers();
+      }
+    }
+
+    function saveLastSnake() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].lastSnakeId = state.selectedSnakeType.id;
+        savePlayers();
+      }
+    }
+
+    /* ---- 玩家 CRUD ---- */
+    function nextPlayerId() {
+      const existing = Object.keys(state.players);
+      let n = 1;
+      while (existing.includes("p" + n)) n += 1;
+      return "p" + n;
+    }
+
+    function createPlayer(name, avatar) {
+      if (Object.keys(state.players).length >= CONFIG.players.maxCount) return null;
+      const id = nextPlayerId();
+      const player = newDefaultPlayer(id, name, avatar);
+      state.players[id] = player;
+      savePlayers();
+      return id;
+    }
+
+    function switchPlayer(id) {
+      if (!state.players[id]) return;
+      // 先把当前运行时数据回写（保险，正常情况下各 save 已落盘）
+      applyPlayerToState(id);
+      savePlayers();
+      // 切换后 UI 全量刷新
+      renderPlayerSwitcher();
+      renderThemeSwitcher();
+      renderHistory();
+      renderSnakeCards();
+      renderSnakeDetail();
+      renderTasks();
+      renderDailyTasks();
+      renderCollection();
+      renderAdventurePanel();
+      renderShop();
+      syncHud();
+      els.snakeOptionButtons.forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.snake === state.selectedSnakeType.id));
+      });
+      if (state.phase === "menu" || state.phase === "gameover") {
+        showMessage("先选一条小蛇",
+          `现在是 ${state.players[id].name} 的存档。选中：${state.selectedSnakeType.name}。`,
+          "开始游戏");
+      }
+    }
+
+    function deletePlayer(id) {
+      if (!state.players[id]) return;
+      delete state.players[id];
+      // 如果删的是当前玩家，切到剩余的第一个
+      if (state.activePlayerId === id) {
+        const remaining = Object.keys(state.players);
+        if (remaining.length === 0) {
+          // 全删光了，重建一个默认玩家
+          const newId = "p1";
+          state.players[newId] = newDefaultPlayer(newId, "玩家1", "🦊");
+          applyPlayerToState(newId);
+        } else {
+          applyPlayerToState(remaining[0]);
+        }
+      }
+      savePlayers();
+      renderPlayerSwitcher();
+      renderHistory();
+      renderSnakeCards();
+      renderSnakeDetail();
+      renderTasks();
+      renderDailyTasks();
+      renderCollection();
+      renderAdventurePanel();
+      renderShop();
+      syncHud();
+    }
+
+    function renamePlayer(id, name, avatar) {
+      if (!state.players[id]) return;
+      const cleanName = name.trim().slice(0, 8) || state.players[id].name;
+      state.players[id].name = cleanName;
+      state.players[id].avatar = avatar;
+      savePlayers();
+      renderPlayerSwitcher();
+      syncHud();
+    }
+
+    /* ---- 等级 / 经验计算 ---- */
+    function getSnakeLevel(xp) {
+      let level = 1;
+      CONFIG.levelThresholds.forEach((needed, index) => {
+        if (xp >= needed) level = index + 1;
+      });
+      return Math.min(level, CONFIG.levelThresholds.length);
+    }
+
+    function getSnakeProgress(snakeId) {
+      const xp = Number(state.progress[snakeId] || 0);
+      const level = getSnakeLevel(xp);
+      const nextLevelXp = CONFIG.levelThresholds[level] || CONFIG.levelThresholds[CONFIG.levelThresholds.length - 1];
+      return { xp, level, nextLevelXp };
+    }
+
+    function getLevelReward(level) {
+      return [...CONFIG.levelRewards].reverse().find(reward => reward.level <= level) || CONFIG.levelRewards[0];
+    }
+
+    function getSnakePerks(snakeId) {
+      const progress = getSnakeProgress(snakeId);
+      return {
+        level: progress.level,
+        shine: progress.level >= 2,
+        startCandyBonus: progress.level >= 3 ? 5 : 0,
+        bonusEffect: progress.level >= 4,
+        skinUnlocked: progress.level >= 5,
+        reward: getLevelReward(progress.level)
+      };
+    }
+
+    function getSnakeTalent(snakeId) {
+      const talents = {
+        sprout: "稳稳救场：每局第一次失误会自动救回。",
+        apple: "果园丰收：吃到金苹果有机会额外长出一颗。",
+        spark: "闪光连击：连吃越高，额外得分越多。",
+        cloud: "云朵时光：所有慢动作效果持续更久。",
+        gem: "宝箱鉴定：打开藤蔓礼盒额外获得 15 糖豆。",
+        fire: "火焰穿行：吃到金苹果后可穿过身体一次。"
+      };
+      return talents[snakeId] || "成长天赋：升级后分数倍率和特效会提升。";
+    }
+
+    function getEffectiveScoreMultiplier(type) {
+      const progress = getSnakeProgress(type.id);
+      return type.scoreMultiplier + (progress.level - 1) * 0.15;
+    }
+
+    function applyLevelStartBonus() {
+      const perks = getSnakePerks(state.selectedSnakeType.id);
+      if (perks.startCandyBonus <= 0) return 0;
+      state.coins += perks.startCandyBonus;
+      saveCoins();
+      renderShop();
+      return perks.startCandyBonus;
+    }
+
+    function addSnakeExperience(points) {
+      const xpGained = Math.max(0, points);
+      const before = getSnakeProgress(state.selectedSnakeType.id);
+      state.progress[state.selectedSnakeType.id] = before.xp + xpGained;
+      saveProgress();
+      const after = getSnakeProgress(state.selectedSnakeType.id);
+      return { xpGained, oldLevel: before.level, newLevel: after.level };
+    }
+
+    function addCandyPoints(points) {
+      state.coins += Math.max(0, points);
+      saveCoins();
+      renderShop();
+      return state.coins;
+    }
+
+    function createRoundChestReward(score) {
+      const rawCandy = CONFIG.chestRewards.baseCandy + Math.floor(Math.max(0, score) / CONFIG.chestRewards.scoreDivisor) * 5;
+      const candy = Math.min(CONFIG.chestRewards.maxCandy, Math.max(CONFIG.chestRewards.minCandy, rawCandy));
+      return {
+        id: Date.now(),
+        candy,
+        score,
+        claimed: false
+      };
+    }
+
+    function claimRoundChest() {
+      if (!state.pendingChest || state.pendingChest.claimed) return false;
+      const reward = state.pendingChest;
+      reward.claimed = true;
+      addCandyPoints(reward.candy);
+      state.pendingChest = null;
+      renderShop();
+      syncHud();
+      showMessage("宝箱打开了",
+        `获得 ${reward.candy} 糖豆！现在可以继续再玩一局。`,
+        "再玩一次");
+      return true;
+    }
+
+    function resetRoundStats() {
+      state.roundStats = { applesEaten: 0, startedAt: performance.now(), seconds: 0, bestCombo: 0, powerups: 0 };
+    }
+
+    function getTaskProgress(task) {
+      if (task.metric === "applesEaten") return state.roundStats.applesEaten;
+      if (task.metric === "score") return state.score;
+      if (task.metric === "seconds") return Math.floor(state.roundStats.seconds);
+      return 0;
+    }
+
+    function completeTask(taskId) {
+      const task = CONFIG.tasks.find(entry => entry.id === taskId);
+      if (!task || state.tasks.completed[taskId]) return false;
+      state.tasks.completed[taskId] = Date.now();
+      state.tasks.progress[taskId] = task.goal;
+      state.coins += task.reward;
+      saveCoins();
+      saveTasks();
+      state.effects.push({
+        kind: "floatText",
+        x: els.canvas.width / 2,
+        y: els.canvas.height * 0.22,
+        text: `任务+${task.reward}`,
+        bornAt: performance.now(),
+        life: 1200
+      });
+      renderTasks();
+      renderDailyTasks();
+      renderCollection();
+      renderAdventurePanel();
+      renderShop();
+      return true;
+    }
+
+    function updateTaskProgress() {
+      if (state.phase === "playing" && state.roundStats.startedAt) {
+        state.roundStats.seconds = (performance.now() - state.roundStats.startedAt) / 1000;
+      }
+      let changed = false;
+      CONFIG.tasks.forEach(task => {
+        const value = Math.min(task.goal, getTaskProgress(task));
+        const previous = Number(state.tasks.progress[task.id] || 0);
+        const next = Math.max(previous, value);
+        if (next !== previous) {
+          state.tasks.progress[task.id] = next;
+          changed = true;
+        }
+        if (value >= task.goal) completeTask(task.id);
+      });
+      if (changed) saveTasks();
+    }
+
+    function todayKey() {
+      return new Date().toLocaleDateString("zh-CN");
+    }
+
+    function ensureDailyTasks() {
+      if (state.daily.date === todayKey()) return;
+      state.daily = { date: todayKey(), progress: {}, completed: {} };
+      saveAdventure();
+    }
+
+    function updateDailyProgress(metric, amount = 1) {
+      ensureDailyTasks();
+      let changed = false;
+      CONFIG.dailyTasks.forEach(task => {
+        if (task.metric !== metric || state.daily.completed[task.id]) return;
+        const next = Math.min(task.goal, Number(state.daily.progress[task.id] || 0) + amount);
+        state.daily.progress[task.id] = next;
+        changed = true;
+        if (next >= task.goal) {
+          state.daily.completed[task.id] = Date.now();
+          state.coins += task.reward;
+          state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.34, text: `每日任务+${task.reward}`, bornAt: performance.now(), life: 1300 });
+        }
+      });
+      if (changed) {
+        saveCoins();
+        saveAdventure();
+        renderDailyTasks();
+        renderShop();
+      }
+    }
+
+    function unlockCollection(id) {
+      if (!CONFIG.collectionItems.some(item => item.id === id)) return;
+      state.collection[id] = Math.max(1, Number(state.collection[id] || 0) + 1);
+      saveAdventure();
+      renderCollection();
+    }
+
+    function getRoundMetric(metric) {
+      if (metric === "applesEaten") return state.roundStats.applesEaten;
+      if (metric === "bestCombo") return state.roundStats.bestCombo || 0;
+      if (metric === "powerups") return state.roundStats.powerups || 0;
+      if (metric === "score") return state.score;
+      return 0;
+    }
+
+    function updateRoundMission() {
+      const mission = state.roundMission;
+      if (!mission || mission.completed) return;
+      if (getRoundMetric(mission.metric) < mission.goal) return;
+      mission.completed = true;
+      state.coins += mission.reward;
+      saveCoins();
+      state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.18, text: `挑战完成+${mission.reward}`, bornAt: performance.now(), life: 1400 });
+      renderAdventurePanel();
+      renderShop();
+    }
+
+    function chooseRandom(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function prepareRoundAdventure() {
+      const template = chooseRandom(CONFIG.roundMissions);
+      const event = chooseRandom(CONFIG.roundEvents);
+      const map = CONFIG.mapRotation[state.roundHistory.length % CONFIG.mapRotation.length];
+      state.roundMission = { ...template, completed: false };
+      state.roundEvent = event;
+      state.roundMap = map;
+      state.themeId = map.themeId;
+      state.goldenRunner = null;
+      state.mysteryChest = null;
+      state.chestChoices = null;
+      state.boss = null;
+      state.combo = { count: 0, expireAt: 0 };
+      state.talent.safeTurnCharges = state.selectedSnakeType.id === "sprout" ? 1 : 0;
+      state.talent.firePassCharges = 0;
+      renderThemeSwitcher();
+      renderAdventurePanel();
+    }
+
+    /* ---- 苹果生成 ---- */
+    function chooseAppleType() {
+      const roll = Math.random();
+      let total = 0;
+      for (const type of CONFIG.appleTypes) {
+        total += type.chance;
+        if (roll <= total) return type;
+      }
+      return CONFIG.appleTypes[0];
+    }
+
+    function chooseBoardPowerupType() {
+      const roll = Math.random();
+      let total = 0;
+      for (const type of CONFIG.boardPowerupTypes) {
+        total += type.chance;
+        if (roll <= total) return type;
+      }
+      return CONFIG.boardPowerupTypes[0];
+    }
+
+    function isCellBlocked(x, y) {
+      const bySnake = state.snake.body.some(part => part.x === x && part.y === y);
+      const byApple = state.apples.some(a => a.x === x && a.y === y);
+      const byBoardPowerup = state.boardPowerups.some(item => item.x === x && item.y === y);
+      const byObstacle = state.obstacles.some(o => o.x === x && o.y === y); // 阶段2 启用
+      const byGolden = state.goldenRunner && state.goldenRunner.x === x && state.goldenRunner.y === y;
+      const byChest = state.mysteryChest && state.mysteryChest.x === x && state.mysteryChest.y === y;
+      const byBoss = state.boss && state.boss.x === x && state.boss.y === y;
+      return bySnake || byApple || byBoardPowerup || byObstacle || byGolden || byChest || byBoss;
+    }
+
+    function findFreeCell() {
+      for (let attempt = 0; attempt < 260; attempt += 1) {
+        const x = Math.floor(Math.random() * CONFIG.cells);
+        const y = Math.floor(Math.random() * CONFIG.cells);
+        if (!isCellBlocked(x, y)) return { x, y };
+      }
+      return null;
+    }
+
+    function spawnGoldenRunner() {
+      const cell = findFreeCell();
+      if (!cell) return false;
+      state.goldenRunner = { ...cell, movesLeft: 18 };
+      return true;
+    }
+
+    function moveGoldenRunner() {
+      const runner = state.goldenRunner;
+      if (!runner) return;
+      runner.movesLeft -= 1;
+      if (runner.movesLeft <= 0) {
+        state.goldenRunner = null;
+        return;
+      }
+      const options = Object.values(DIR_VECTORS).map(dir => ({ x: runner.x + dir.x, y: runner.y + dir.y }));
+      const next = chooseRandom(options.filter(cell => cell.x >= 0 && cell.y >= 0 && cell.x < CONFIG.cells && cell.y < CONFIG.cells &&
+        !state.snake.body.some(part => part.x === cell.x && part.y === cell.y) &&
+        !state.apples.some(apple => apple.x === cell.x && apple.y === cell.y) &&
+        !state.boardPowerups.some(item => item.x === cell.x && item.y === cell.y)));
+      if (next) Object.assign(runner, next);
+    }
+
+    function spawnMysteryChest() {
+      if (state.mysteryChest || state.chestChoices) return false;
+      const cell = findFreeCell();
+      if (!cell) return false;
+      state.mysteryChest = cell;
+      return true;
+    }
+
+    function spawnBoss() {
+      const cell = findFreeCell();
+      if (!cell || state.boss) return false;
+      state.boss = { ...cell, health: 4, spawnedAt: performance.now() };
+      state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.28, text: "果园首领出现!", bornAt: performance.now(), life: 1400 });
+      return true;
+    }
+
+    function placeApples() {
+      while (state.apples.length < CONFIG.appleCount) {
+        const x = Math.floor(Math.random() * CONFIG.cells);
+        const y = Math.floor(Math.random() * CONFIG.cells);
+        if (!isCellBlocked(x, y)) {
+          state.apples.push({ x, y, type: chooseAppleType().id });
+        }
+      }
+    }
+
+    function addAppleOfType(typeId) {
+      for (let attempt = 0; attempt < 240; attempt += 1) {
+        const x = Math.floor(Math.random() * CONFIG.cells);
+        const y = Math.floor(Math.random() * CONFIG.cells);
+        if (!isCellBlocked(x, y)) {
+          state.apples.push({ x, y, type: typeId });
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function placeBoardPowerups() {
+      while (state.boardPowerups.length < CONFIG.boardPowerupLimit) {
+        let placed = false;
+        for (let attempt = 0; attempt < 240 && !placed; attempt += 1) {
+          const x = Math.floor(Math.random() * CONFIG.cells);
+          const y = Math.floor(Math.random() * CONFIG.cells);
+          if (!isCellBlocked(x, y)) {
+            state.boardPowerups.push({ x, y, type: chooseBoardPowerupType().id });
+            placed = true;
+          }
+        }
+        if (!placed) break;
+      }
+    }
+
+    /* ---- 苹果效果 ---- */
+    function applyAppleEffect(appleType, now) {
+      if (appleType.effect === "slow") {
+        const duration = state.selectedSnakeType.id === "cloud" ? 7500 : 5000;
+        setTemporarySpeed(Math.round(state.selectedSnakeType.tickMs * 1.45), duration, now);
+      } else if (appleType.effect === "shrink") {
+        shrinkSnake(2);
+      }
+    }
+
+    function growSnakeFromTail() {
+      const tail = state.snake.body[state.snake.body.length - 1];
+      if (tail) state.snake.body.push({ x: tail.x, y: tail.y });
+    }
+
+    function collectAppleAt(appleIndex, now, options = {}) {
+      if (appleIndex < 0 || appleIndex >= state.apples.length) return false;
+      const eatenApple = state.apples.splice(appleIndex, 1)[0];
+      const appleType = APPLE_TYPE_BY_ID[eatenApple.type] || CONFIG.appleTypes[0];
+      const comboWindow = 2600;
+      state.combo.count = now <= state.combo.expireAt ? state.combo.count + 1 : 1;
+      state.combo.expireAt = now + comboWindow;
+      state.roundStats.bestCombo = Math.max(state.roundStats.bestCombo || 0, state.combo.count);
+      const comboTier = state.combo.count >= 10 ? 3 : state.combo.count >= 6 ? 2 : state.combo.count >= 3 ? 1 : 0;
+      const eventBonus = state.roundEvent?.comboBonus || 0;
+      const comboMultiplier = 1 + (comboTier + eventBonus) * 0.25;
+      state.score += Math.round(appleType.points * getEffectiveScoreMultiplier(state.selectedSnakeType) * comboMultiplier);
+      state.roundStats.applesEaten += 1;
+      updateDailyProgress("apples");
+      if (appleType.id === "gold") {
+        if (state.selectedSnakeType.id === "fire") state.talent.firePassCharges = 1;
+        if (state.selectedSnakeType.id === "apple" && Math.random() < 0.28) addAppleOfType("gold");
+      }
+      if (state.score > state.best) {
+        state.best = state.score;
+        saveBest();
+      }
+      if (options.magnet) growSnakeFromTail();
+      applyAppleEffect(appleType, now);
+      if (state.selectedSnakeType.id === "spark" && state.combo.count >= 3) {
+        state.score += 4 * Math.min(3, Math.floor(state.combo.count / 3));
+      }
+      if (state.roundStats.applesEaten === 4 && !state.goldenRunner) spawnGoldenRunner();
+      if (state.roundStats.applesEaten >= 7 && !state.mysteryChest && !state.chestChoices) spawnMysteryChest();
+      if (state.snake.body.length >= 18 && !state.boss) spawnBoss();
+      if (state.combo.count >= 6) unlockCollection("combo");
+      spawnEatEffect(eatenApple.x * CELL_SIZE + CELL_SIZE / 2, eatenApple.y * CELL_SIZE + CELL_SIZE / 2, appleType);
+      if (options.magnet) {
+        state.effects.push({
+          kind: "floatText",
+          x: eatenApple.x * CELL_SIZE + CELL_SIZE / 2,
+          y: eatenApple.y * CELL_SIZE + CELL_SIZE / 2,
+          text: "磁铁吃到!",
+          bornAt: now,
+          life: 900
+        });
+      }
+      placeApples();
+      placeBoardPowerups();
+      updateRoundMission();
+      return true;
+    }
+
+    function applyBoardPowerup(powerup) {
+      const type = BOARD_POWERUP_BY_ID[powerup.type] || CONFIG.boardPowerupTypes[0];
+      const now = performance.now();
+      const points = awardSkillPoints(type);
+      state.roundStats.powerups = Number(state.roundStats.powerups || 0) + 1;
+      updateRoundMission();
+      let text = type.name;
+      if (type.action === "candy") {
+        addCandyPoints(type.amount || 20);
+        text = `糖果+${type.amount || 20}糖豆`;
+      } else if (type.action === "jelly") {
+        shrinkSnake(2);
+        text = "果冻变短";
+      } else {
+        applyShopItem(type.action);
+        text = `${type.name}!`;
+      }
+      if (points > 0) text += ` +${points}分`;
+      state.effects.push({
+        kind: "floatText",
+        x: powerup.x * CELL_SIZE + CELL_SIZE / 2,
+        y: powerup.y * CELL_SIZE + CELL_SIZE / 2,
+        text,
+        bornAt: now,
+        life: 1000
+      });
+      renderShop();
+      renderPowerStatus();
+      syncHud();
+    }
+
+    function awardSkillPoints(type) {
+      const points = Number(type.bonusScore || 0);
+      if (points <= 0) return 0;
+      state.score += points;
+      if (state.score > state.best) {
+        state.best = state.score;
+        saveBest();
+      }
+      return points;
+    }
+
+    function buyShopItem(itemId) {
+      const item = CONFIG.shopItems.find(entry => entry.id === itemId);
+      if (!["playing", "paused"].includes(state.phase)) return false;
+      if (!item || state.coins < item.cost) return false;
+      state.coins -= item.cost;
+      saveCoins();
+      applyShopItem(item.id);
+      renderShop();
+      renderPowerStatus();
+      return true;
+    }
+
+    function queueShopItemForNextGame(itemId) {
+      state.pendingShopItems[itemId] = Number(state.pendingShopItems[itemId] || 0) + 1;
+      savePendingShopItems();
+      return state.pendingShopItems[itemId];
+    }
+
+    function applyPendingShopItems() {
+      Object.entries(state.pendingShopItems).forEach(([itemId, count]) => {
+        for (let i = 0; i < count; i += 1) {
+          applyShopItem(itemId);
+        }
+      });
+      state.pendingShopItems = {};
+      savePendingShopItems();
+    }
+
+    function applyShopItem(itemId) {
+      const now = performance.now();
+      if (itemId === "magnet") {
+        state.powerups.magnetUntil = Math.max(state.powerups.magnetUntil, now) + CONFIG.shopDurations.magnet;
+      } else if (itemId === "shield") {
+        state.powerups.shieldCharges += 1;
+      } else if (itemId === "feast") {
+        for (let i = 0; i < 5; i += 1) addAppleOfType("gold");
+      } else if (itemId === "slowTime") {
+        const duration = state.selectedSnakeType.id === "cloud" ? Math.round(CONFIG.shopDurations.slowTime * 1.55) : CONFIG.shopDurations.slowTime;
+        setTemporarySpeed(Math.round(state.selectedSnakeType.tickMs * 1.55), duration, now);
+      }
+    }
+
+    function applyMagnetPull() {
+      const now = performance.now();
+      if (state.powerups.magnetUntil <= now || state.phase !== "playing") return;
+      const head = state.snake.body[0];
+      for (let index = state.apples.length - 1; index >= 0; index -= 1) {
+        const apple = state.apples[index];
+        const dx = head.x - apple.x;
+        const dy = head.y - apple.y;
+        const distance = Math.abs(dx) + Math.abs(dy);
+        if (distance <= 1) {
+          collectAppleAt(index, now, { magnet: true });
+          return;
+        }
+        if (distance > 7) continue;
+        const moveX = Math.abs(dx) >= Math.abs(dy) ? Math.sign(dx) : 0;
+        const moveY = moveX === 0 ? Math.sign(dy) : 0;
+        const nextX = apple.x + moveX;
+        const nextY = apple.y + moveY;
+        const hitsHead = nextX === head.x && nextY === head.y;
+        if (hitsHead) {
+          collectAppleAt(index, now, { magnet: true });
+          return;
+        }
+        const occupied = state.snake.body.some(part => part.x === nextX && part.y === nextY) ||
+          state.apples.some(other => other !== apple && other.x === nextX && other.y === nextY);
+        if (!occupied && nextX >= 0 && nextY >= 0 && nextX < CONFIG.cells && nextY < CONFIG.cells) {
+          apple.x = nextX;
+          apple.y = nextY;
+        }
+      }
+    }
+
+    function useShieldSave() {
+      if (state.powerups.shieldCharges <= 0) return false;
+      state.powerups.shieldCharges -= 1;
+      state.snake.body = [
+        { x: 15, y: 15 },
+        { x: 14, y: 15 },
+        { x: 13, y: 15 }
+      ];
+      state.snake.direction = { x: 1, y: 0 };
+      state.snake.nextDirection = { x: 1, y: 0 };
+      state.effects.push({
+        kind: "floatText",
+        x: 15 * CELL_SIZE,
+        y: 13 * CELL_SIZE,
+        text: "护盾!",
+        bornAt: performance.now(),
+        life: 1000
+      });
+      return true;
+    }
+
+    function setTemporarySpeed(tickMs, durationMs, now) {
+      state.timing.tickMs = tickMs;
+      state.timing.speedEffectUntil = now + durationMs;
+    }
+
+    function getRoundTickMs() {
+      return Math.round(state.selectedSnakeType.tickMs * (state.roundEvent?.speedFactor || 1));
+    }
+
+    function shrinkSnake(amount) {
+      const minimumLength = 3;
+      for (let i = 0; i < amount && state.snake.body.length > minimumLength; i += 1) {
+        state.snake.body.pop();
+      }
+    }
+
+    function collectGoldenRunner(now) {
+      if (!state.goldenRunner) return;
+      state.goldenRunner = null;
+      state.score += Math.round(90 * getEffectiveScoreMultiplier(state.selectedSnakeType));
+      state.coins += 15;
+      growSnakeFromTail();
+      growSnakeFromTail();
+      updateDailyProgress("goldens");
+      unlockCollection("golden");
+      saveCoins();
+      state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.42, text: "追到金苹果! +90", bornAt: now, life: 1200 });
+      updateRoundMission();
+    }
+
+    function openMysteryChest(now) {
+      if (!state.mysteryChest) return;
+      state.mysteryChest = null;
+      unlockCollection("chest");
+      const choices = [...CONFIG.chestChoices].sort(() => Math.random() - 0.5).slice(0, 3);
+      state.chestChoices = choices;
+      renderChestChoices();
+      setPhase("paused");
+      showMessage("藤蔓礼盒", "三张奖励卡里选一张，点一下就能马上继续游戏。", "开始游戏");
+      els.startButton.hidden = true;
+      state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.46, text: "发现藤蔓礼盒!", bornAt: now, life: 1000 });
+    }
+
+    function chooseMysteryChestReward(id) {
+      const choice = state.chestChoices?.find(item => item.id === id);
+      if (!choice) return;
+      if (choice.id === "candy") addCandyPoints(choice.amount || 50);
+      else applyShopItem(choice.id);
+      if (state.selectedSnakeType.id === "gem") addCandyPoints(15);
+      state.chestChoices = null;
+      els.chestChoices.hidden = true;
+      els.startButton.hidden = false;
+      setPhase("playing");
+      state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.47, text: `${choice.name}到手!`, bornAt: performance.now(), life: 1100 });
+    }
+
+    function hitBoss(now) {
+      if (!state.boss) return;
+      state.boss.health -= 1;
+      if (state.boss.health <= 0) {
+        state.score += 160;
+        state.coins += 80;
+        state.boss = null;
+        updateDailyProgress("bosses");
+        unlockCollection("boss");
+        saveCoins();
+        state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.3, text: "首领击退! +160", bornAt: now, life: 1500 });
+      } else {
+        const cell = findFreeCell();
+        if (cell) Object.assign(state.boss, cell);
+        state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.3, text: `首领受击 ${state.boss.health}`, bornAt: now, life: 900 });
+      }
+      updateRoundMission();
+    }
+
+    /* ---- 方向控制 ---- */
+    function setDirection(name) {
+      const wanted = DIR_VECTORS[name];
+      if (!wanted) return;
+      const current = state.snake.direction || { x: 1, y: 0 };
+      const isReverse = wanted.x + current.x === 0 && wanted.y + current.y === 0;
+      if (!isReverse) {
+        state.snake.nextDirection = wanted;
+      }
+    }
+
+    /* ---- 单步推进（核心逻辑，固定步长调用） ---- */
+    function step(now) {
+      if (state.phase !== "playing") return;
+
+      applyMagnetPull();
+      moveGoldenRunner();
+      state.snake.direction = state.snake.nextDirection;
+      const head = state.snake.body[0];
+      const newHead = {
+        x: head.x + state.snake.direction.x,
+        y: head.y + state.snake.direction.y
+      };
+
+      const hitWall = newHead.x < 0 || newHead.y < 0 || newHead.x >= CONFIG.cells || newHead.y >= CONFIG.cells;
+      const hitSelf = state.snake.body.some(part => part.x === newHead.x && part.y === newHead.y);
+
+      if (hitWall || hitSelf) {
+        if (state.selectedSnakeType.id === "sprout" && state.talent.safeTurnCharges > 0) {
+          state.talent.safeTurnCharges -= 1;
+          useShieldSave();
+          state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.5, text: "稳稳蛇救场!", bornAt: now, life: 1100 });
+          return;
+        }
+        if (hitSelf && state.selectedSnakeType.id === "fire" && state.talent.firePassCharges > 0) {
+          state.talent.firePassCharges -= 1;
+          state.snake.body.unshift(newHead);
+          state.snake.body.pop();
+          state.effects.push({ kind: "floatText", x: newHead.x * CELL_SIZE, y: newHead.y * CELL_SIZE, text: "火焰穿行!", bornAt: now, life: 900 });
+          return;
+        }
+        if (useShieldSave()) {
+          return;
+        }
+        endGame();
+        return;
+      }
+
+      state.snake.body.unshift(newHead);
+      const appleIndex = state.apples.findIndex(a => a.x === newHead.x && a.y === newHead.y);
+      const powerupIndex = state.boardPowerups.findIndex(item => item.x === newHead.x && item.y === newHead.y);
+      const hitGolden = state.goldenRunner && state.goldenRunner.x === newHead.x && state.goldenRunner.y === newHead.y;
+      const hitChest = state.mysteryChest && state.mysteryChest.x === newHead.x && state.mysteryChest.y === newHead.y;
+      const hitBossTarget = state.boss && state.boss.x === newHead.x && state.boss.y === newHead.y;
+
+      if (hitGolden) {
+        collectGoldenRunner(now);
+      } else if (hitChest) {
+        openMysteryChest(now);
+      } else if (hitBossTarget) {
+        hitBoss(now);
+        state.snake.body.pop();
+      } else if (appleIndex >= 0) {
+        collectAppleAt(appleIndex, now);
+      } else if (powerupIndex >= 0) {
+        const eatenPowerup = state.boardPowerups.splice(powerupIndex, 1)[0];
+        applyBoardPowerup(eatenPowerup);
+        placeBoardPowerups();
+        state.snake.body.pop();
+      } else {
+        state.snake.body.pop();
+      }
+    }
+
+    /* ---- 游戏阶段控制 ---- */
+    function newGame() {
+      state.snake.body = [
+        { x: 15, y: 15 },
+        { x: 14, y: 15 },
+        { x: 13, y: 15 }
+      ];
+      state.snake.direction = { x: 1, y: 0 };
+      state.snake.nextDirection = { x: 1, y: 0 };
+      state.apples = [];
+      state.boardPowerups = [];
+      state.score = 0;
+      resetRoundStats();
+      prepareRoundAdventure();
+      state.timing.tickMs = getRoundTickMs();
+      state.timing.speedEffectUntil = 0;
+      state.timing.accumulator = 0;
+      state.timing.pauseStartedAt = 0;
+      state.powerups.magnetUntil = 0;
+      applyLevelStartBonus();
+      placeApples();
+      for (let i = 0; i < (state.roundEvent?.appleBonus || 0); i += 1) addAppleOfType("normal");
+      placeBoardPowerups();
+      const startReward = chooseRandom(["shield", "magnet", "candy"]);
+      if (startReward === "candy") addCandyPoints(12);
+      else applyShopItem(startReward);
+      state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.48, text: "开局奖励!", bornAt: performance.now(), life: 900 });
+      setPhase("playing");
+      applyPendingShopItems();
+      renderPowerStatus();
+    }
+
+    function endGame() {
+      setPhase("gameover");
+      recordRound();
+      const progress = addSnakeExperience(state.score);
+      addCandyPoints(state.score);
+      state.pendingChest = createRoundChestReward(state.score);
+      renderHistory();
+      renderSnakeCards();
+      renderPowerStatus();
+      showMessage("游戏结束",
+        `${state.selectedSnakeType.name} 得了 ${state.score} 分，获得 ${progress.xpGained} 经验和 ${state.score} 糖豆，现在是 ${progress.newLevel} 级。宝箱里还有 ${state.pendingChest.candy} 糖豆。`,
+        "领取宝箱");
+    }
+
+    function recordRound() {
+      const round = {
+        snake: state.selectedSnakeType.name,
+        score: state.score,
+        time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
+      };
+      state.roundHistory = [round, ...state.roundHistory].slice(0, 8);
+      saveHistory();
+    }
+
+    function shiftTimedPowerups(ms) {
+      if (ms <= 0) return;
+      if (state.powerups.magnetUntil > 0) state.powerups.magnetUntil += ms;
+      if (state.timing.speedEffectUntil > 0) state.timing.speedEffectUntil += ms;
+    }
+
+    function togglePause() {
+      if (state.phase === "playing") {
+        state.timing.pauseStartedAt = performance.now();
+        setPhase("paused");
+        showMessage("暂停中", "按空格键继续游戏。", "继续游戏");
+      } else if (state.phase === "paused") {
+        shiftTimedPowerups(performance.now() - state.timing.pauseStartedAt);
+        state.timing.pauseStartedAt = 0;
+        setPhase("playing");
+      }
+      renderShop();
+      renderPowerStatus();
+    }
+
+    function chooseSnake(id) {
+      state.selectedSnakeType = SNAKE_TYPE_BY_ID[id] || SNAKE_TYPE_BY_ID.sprout;
+      els.snakeOptionButtons.forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.snake === state.selectedSnakeType.id));
+      });
+      saveLastSnake();   // 记住该玩家上次选的蛇
+      renderCurrentSnakeHud();
+      renderSnakeDetail();
+      if (state.phase === "menu" || state.phase === "gameover") {
+        showMessage("先选一条小蛇",
+          `现在选中：${state.selectedSnakeType.name}。${state.selectedSnakeType.note}`,
+          "开始游戏");
+      }
+    }
+
+    /* =========================================================================
+       RENDER 层：纯绘制，本阶段保持与原版像素级一致
+       阶段1 将整体替换这里的绘制函数（蛇/苹果/背景/特效）
+       ========================================================================= */
+    /* 当前主题对象（按 state.themeId 取） */
+    function currentTheme() {
+      return CONFIG.themes.find(t => t.id === state.themeId) || CONFIG.themes[0];
+    }
+
+    function render() {
+      drawBackground();
+      state.apples.forEach(drawTargetHint);
+      state.boardPowerups.forEach(drawBoardPowerupHint);
+      state.apples.forEach(drawApple);
+      if (state.goldenRunner) drawGoldenRunner(state.goldenRunner);
+      if (state.mysteryChest) drawMysteryChest(state.mysteryChest);
+      if (state.boss) drawBossTarget(state.boss);
+      state.boardPowerups.forEach(drawBoardPowerup);
+      state.boardPowerups.forEach(drawPowerupLabel);
+      drawSnakeBody();
+      drawEffects();
+    }
+
+    /* ---- 背景：双色草地格 + 木栅栏边框 ---- */
+    function drawBackground() {
+      const { ctx, canvas } = els;
+      const theme = currentTheme();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = theme.boardLight;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawAlignedOrchardGrid();
+    }
+
+    function drawAlignedOrchardGrid() {
+      const { ctx } = els;
+      const theme = currentTheme();
+      ctx.save();
+      for (let y = 0; y < CONFIG.cells; y += 1) {
+        for (let x = 0; x < CONFIG.cells; x += 1) {
+          const rect = cellRect({ x, y });
+          const isLight = (x + y) % 2 === 0;
+          ctx.fillStyle = isLight
+            ? "rgba(244, 255, 198, 0.15)"
+            : "rgba(72, 142, 56, 0.06)";
+          ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        }
+      }
+      drawSoftArenaTexture();
+      ctx.strokeStyle = state.themeId === "orchard" ? "rgba(37, 104, 43, 0.17)" : theme.grid;
+      ctx.lineWidth = state.themeId === "orchard" ? 1.15 : 0.8;
+      for (let i = 0; i <= CONFIG.cells; i += 1) {
+        const pos = i * CELL_SIZE;
+        ctx.beginPath();
+        ctx.moveTo(pos, 0); ctx.lineTo(pos, els.canvas.height); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, pos); ctx.lineTo(els.canvas.width, pos); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawOrchardDecorations() {
+      // Reserved for a future non-interactive background layer. Board cells stay clear.
+    }
+
+    function drawArenaImageUnderlay(ctx, canvas) {
+      const img = gameImages.arenaBackground;
+      if (!isImageReady(img)) return;
+      const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+      const width = img.naturalWidth * scale;
+      const height = img.naturalHeight * scale;
+      const x = (canvas.width - width) / 2;
+      const y = (canvas.height - height) / 2;
+      ctx.save();
+      ctx.globalAlpha = state.themeId === "orchard" ? 0.28 : 0.16;
+      ctx.drawImage(img, x, y, width, height);
+      ctx.fillStyle = "rgba(217, 244, 173, 0.48)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+
+    function drawSoftArenaTexture() {
+      const { ctx, canvas } = els;
+      const theme = currentTheme();
+      ctx.save();
+      ctx.globalAlpha = state.themeId === "orchard" ? 0.32 : 0.18;
+      for (let y = 0; y < CONFIG.cells; y += 2) {
+        for (let x = 0; x < CONFIG.cells; x += 2) {
+          if ((x + y) % 4 !== 0) continue;
+          ctx.fillStyle = theme.boardDark;
+          ctx.beginPath();
+          ctx.roundRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE * 2, CELL_SIZE * 2, CELL_SIZE * 0.4);
+          ctx.fill();
+        }
+      }
+
+      const glow = ctx.createRadialGradient(
+        canvas.width * 0.45, canvas.height * 0.35, canvas.width * 0.08,
+        canvas.width * 0.48, canvas.height * 0.4, canvas.width * 0.75
+      );
+      glow.addColorStop(0, "rgba(255,255,255,0.18)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+
+    /* ---- 整条蛇：角色蛇头 + 严格格内的软糖身体 ---- */
+    function drawSnakeBody() {
+      const { ctx } = els;
+      const type = state.selectedSnakeType;
+      const body = state.snake.body;
+      if (!body.length) return;
+      const baseRadius = CELL_SIZE * CONFIG.visualScale.snakeRadius;
+      const perks = getSnakePerks(type.id);
+
+      if (body.length > 1) {
+        drawCharacterSnakeSegments(body, type, baseRadius, perks);
+      }
+
+      const head = body[0];
+      const { cx: hcx, cy: hcy } = cellCenter(head);
+      drawLevelAura(hcx, hcy, baseRadius * CONFIG.visualScale.headScale, perks, type);
+      drawCharacterNeck(hcx, hcy, type, state.snake.direction);
+      drawCardPortraitHead(hcx, hcy, baseRadius * CONFIG.visualScale.headScale, type, state.snake.direction, perks);
+    }
+
+    function drawCharacterSnakeSegments(body, type, radius, perks) {
+      body.slice(1).forEach((part, index) => drawCharacterSnakeSegment(part, index, type, radius, perks));
+    }
+
+    function drawCharacterSnakeSegment(part, index, type, radius, perks) {
+      const { ctx } = els;
+      const rect = cellRect(part);
+      const inset = CELL_SIZE * 0.095;
+      const size = CELL_SIZE - inset * 2;
+      const corner = CELL_SIZE * 0.32;
+      const shade = index % 2 === 0 ? type.body : type.light;
+      ctx.save();
+      ctx.fillStyle = type.stroke;
+      ctx.beginPath();
+      ctx.roundRect(rect.x + inset * 0.55, rect.y + inset * 0.55, size, size, corner);
+      ctx.fill();
+
+      const fill = ctx.createLinearGradient(rect.x, rect.y, rect.x + CELL_SIZE, rect.y + CELL_SIZE);
+      fill.addColorStop(0, type.light);
+      fill.addColorStop(0.52, shade);
+      fill.addColorStop(1, type.body);
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.roundRect(rect.x + inset, rect.y + inset, size - inset * 0.9, size - inset * 0.9, corner * 0.83);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.34)";
+      ctx.beginPath();
+      ctx.ellipse(rect.x + CELL_SIZE * 0.38, rect.y + CELL_SIZE * 0.3, CELL_SIZE * 0.17, CELL_SIZE * 0.09, -0.42, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,247,206,0.42)";
+      ctx.beginPath();
+      ctx.ellipse(rect.x + CELL_SIZE * 0.52, rect.y + CELL_SIZE * 0.61, CELL_SIZE * 0.2, CELL_SIZE * 0.15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      drawBodyDecoration(rect.x + CELL_SIZE / 2, rect.y + CELL_SIZE / 2, radius * 0.54, type, index + 1);
+      if (perks.shine && index % 3 === 0) {
+        drawStar(rect.x + CELL_SIZE * 0.76, rect.y + CELL_SIZE * 0.22, CELL_SIZE * 0.11, "#fff6a6", "#ffae00");
+      }
+      ctx.restore();
+    }
+
+    function drawCharacterNeck(cx, cy, type, dir) {
+      const { ctx } = els;
+      const atlas = gameImages.boardSnakeNecksV1;
+      if (!isImageReady(atlas)) return;
+      const snakeIndex = CONFIG.snakeTypes.findIndex(snake => snake.id === type.id);
+      const sourceWidth = atlas.naturalWidth / 4;
+      const sourceHeight = atlas.naturalHeight / 3;
+      const sourceX = (snakeIndex % 4) * sourceWidth;
+      const sourceY = Math.floor(snakeIndex / 4) * sourceHeight;
+      const displaySize = CELL_SIZE * 2.28;
+      const angle = Math.atan2(dir.y, dir.x) + Math.PI / 2;
+      ctx.save();
+      ctx.translate(cx - dir.x * CELL_SIZE * 0.48, cy - dir.y * CELL_SIZE * 0.48);
+      ctx.rotate(angle);
+      ctx.drawImage(atlas, sourceX, sourceY, sourceWidth, sourceHeight, -displaySize / 2, -displaySize / 2, displaySize, displaySize);
+      ctx.restore();
+    }
+
+    function drawCardPortraitHead(cx, cy, radius, type, dir, perks) {
+      const { ctx } = els;
+      const atlas = gameImages.snakePortraitsCrisp;
+      if (!isImageReady(atlas)) {
+        drawExpressiveHead(cx, cy, radius, type, dir, perks);
+        return;
+      }
+      const snakeIndex = CONFIG.snakeTypes.findIndex(snake => snake.id === type.id);
+      const sourceWidth = atlas.naturalWidth / 4;
+      const sourceHeight = atlas.naturalHeight / 3;
+      const sourceX = (snakeIndex % 4) * sourceWidth;
+      const sourceY = Math.floor(snakeIndex / 4) * sourceHeight;
+      const displaySize = CELL_SIZE * 2.05;
+      const angle = Math.atan2(dir.y, dir.x) + Math.PI / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.shadowColor = "rgba(21, 67, 30, 0.28)";
+      ctx.shadowBlur = CELL_SIZE * 0.2;
+      ctx.shadowOffsetY = CELL_SIZE * 0.08;
+      ctx.drawImage(atlas, sourceX, sourceY, sourceWidth, sourceHeight, -displaySize / 2, -displaySize / 2, displaySize, displaySize);
+      ctx.restore();
+    }
+
+    function drawLuxuryTubePath(body, type, radius, perks) {
+      const { ctx } = els;
+      const tube = createTubePath(body);
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.strokeStyle = "rgba(0,0,0,0.18)";
+      ctx.lineWidth = radius * 2.2;
+      ctx.translate(0, radius * 0.42);
+      ctx.stroke(tube);
+      ctx.translate(0, -radius * 0.42);
+
+      ctx.strokeStyle = type.stroke;
+      ctx.lineWidth = radius * 2.05;
+      ctx.stroke(tube);
+
+      const grad = ctx.createLinearGradient(0, 0, els.canvas.width, els.canvas.height);
+      grad.addColorStop(0, type.light);
+      grad.addColorStop(0.45, type.body);
+      grad.addColorStop(1, type.stroke);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = radius * 1.64;
+      ctx.stroke(tube);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.38)";
+      ctx.lineWidth = radius * 0.34;
+      ctx.setLineDash([radius * 1.15, radius * 1.7]);
+      ctx.lineDashOffset = -performance.now() / 80;
+      ctx.stroke(tube);
+
+      if (perks.shine) {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "rgba(255,255,255,0.48)";
+        ctx.lineWidth = radius * 0.18;
+        ctx.stroke(tube);
+      }
+      ctx.restore();
+    }
+
+    function createTubePath(body) {
+      const path = new Path2D();
+      const points = body.map(cellCenter);
+      path.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length - 1; i += 1) {
+        const midX = (points[i].x + points[i + 1].x) / 2;
+        const midY = (points[i].y + points[i + 1].y) / 2;
+        path.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+      }
+      if (points.length > 1) {
+        const tail = points[points.length - 1];
+        path.lineTo(tail.x, tail.y);
+      }
+      return path;
+    }
+
+    function drawLevelAura(cx, cy, radius, perks, type) {
+      if (!perks.shine) return;
+      const { ctx } = els;
+      ctx.save();
+      const glow = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, radius * 1.65);
+      glow.addColorStop(0, type.light);
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.globalAlpha = perks.skinUnlocked ? 0.32 : 0.2;
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 1.65, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawExpressiveHead(cx, cy, radius, type, dir, perks) {
+      const { ctx } = els;
+      const angle = Math.atan2(dir.y, dir.x);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.beginPath();
+      ctx.ellipse(-radius * 0.1, radius * 0.88, radius * 1.0, radius * 0.28, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const grad = ctx.createRadialGradient(-radius * 0.35, -radius * 0.45, radius * 0.08, 0, 0, radius * 1.25);
+      grad.addColorStop(0, type.light);
+      grad.addColorStop(0.55, type.head || type.body);
+      grad.addColorStop(1, type.stroke);
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = type.stroke;
+      ctx.lineWidth = Math.max(3, radius * 0.13);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius * 1.05, radius * 0.9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255,255,255,0.58)";
+      ctx.beginPath();
+      ctx.ellipse(-radius * 0.3, -radius * 0.38, radius * 0.42, radius * 0.18, -0.25, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,112,150,0.5)";
+      ctx.beginPath();
+      ctx.arc(radius * 0.18, radius * 0.28, radius * 0.18, 0, Math.PI * 2);
+      ctx.arc(radius * 0.64, radius * 0.28, radius * 0.16, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawHeadEye(radius * 0.42, -radius * 0.28, radius);
+      drawHeadEye(radius * 0.42, radius * 0.28, radius);
+
+      ctx.strokeStyle = "rgba(34,44,36,0.58)";
+      ctx.lineWidth = Math.max(2, radius * 0.07);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(radius * 0.62, 0, radius * 0.23, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ff4f82";
+      ctx.lineWidth = Math.max(2, radius * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(radius * 0.82, 0);
+      ctx.lineTo(radius * 1.0, 0);
+      ctx.moveTo(radius * 1.0, 0);
+      ctx.lineTo(radius * 1.08, -radius * 0.09);
+      ctx.moveTo(radius * 1.0, 0);
+      ctx.lineTo(radius * 1.08, radius * 0.09);
+      ctx.stroke();
+      if (perks.skinUnlocked) {
+        drawStar(radius * -0.22, -radius * 0.92, radius * 0.22, "#fff6a6", "#ffae00");
+      }
+      ctx.restore();
+
+      drawHeadDecoration(cx, cy, radius * 0.88, type);
+    }
+
+    function drawHeadEye(x, y, radius) {
+      const { ctx } = els;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(x, y, radius * 0.23, radius * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#17311e";
+      ctx.beginPath();
+      ctx.arc(x + radius * 0.05, y, radius * 0.09, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(x + radius * 0.01, y - radius * 0.04, radius * 0.035, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function strokeBodyPath(ctx, body) {
+      ctx.beginPath();
+      body.forEach((part, i) => {
+        const x = part.x * CELL_SIZE + CELL_SIZE / 2;
+        const y = part.y * CELL_SIZE + CELL_SIZE / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    /* ---- 一节立体蛇身（果冻质感：投影 + 径向渐变 + 高光） ---- */
+    function drawJellySegment(cx, cy, radius, type) {
+      const { ctx } = els;
+      // 底部投影
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + radius * 0.85, radius * 0.9, radius * 0.25, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 主体径向渐变（左上亮 → 右下暗）
+      const grad = ctx.createRadialGradient(
+        cx - radius * 0.35, cy - radius * 0.4, radius * 0.1,
+        cx, cy, radius
+      );
+      grad.addColorStop(0, type.light);
+      grad.addColorStop(0.55, type.body);
+      grad.addColorStop(1, type.stroke);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      // 顶部高光（月牙）
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(cx - radius * 0.25, cy - radius * 0.4, radius * 0.35, radius * 0.18, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      // 小亮点
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.beginPath();
+      ctx.arc(cx - radius * 0.35, cy - radius * 0.45, radius * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---- 头部：朝向眼睛 + 信子 + 嘴 + 蛇种装饰 ---- */
+    function drawJellyHead(cx, cy, radius, type, dir) {
+      const { ctx } = els;
+      const dx = dir.x, dy = dir.y;
+      const eyeOffsetX = dx * radius * 0.12;
+      const eyeOffsetY = dy * radius * 0.12;
+
+      // 眼白
+      const eyeY = cy - radius * 0.2 + eyeOffsetY;
+      const lex = cx - radius * 0.3 + eyeOffsetX;
+      const rex = cx + radius * 0.3 + eyeOffsetX;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(lex, eyeY, radius * 0.2, 0, Math.PI * 2);
+      ctx.arc(rex, eyeY, radius * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // 瞳孔（朝向移动方向）
+      ctx.fillStyle = "#16331a";
+      ctx.beginPath();
+      ctx.arc(lex + dx * radius * 0.06, eyeY + dy * radius * 0.06, radius * 0.1, 0, Math.PI * 2);
+      ctx.arc(rex + dx * radius * 0.06, eyeY + dy * radius * 0.06, radius * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      // 瞳孔高光
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(lex + dx * radius * 0.06 - radius * 0.03, eyeY + dy * radius * 0.06 - radius * 0.03, radius * 0.035, 0, Math.PI * 2);
+      ctx.arc(rex + dx * radius * 0.06 - radius * 0.03, eyeY + dy * radius * 0.06 - radius * 0.03, radius * 0.035, 0, Math.PI * 2);
+      ctx.fill();
+      // 嘴巴（微笑弧）
+      ctx.strokeStyle = "rgba(22,51,26,0.5)";
+      ctx.lineWidth = Math.max(2, radius * 0.06);
+      ctx.beginPath();
+      ctx.arc(cx, cy + radius * 0.18, radius * 0.25, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+      // 信子（朝运动方向吐出）
+      const tongueTipX = cx + dx * radius * 1.1;
+      const tongueTipY = cy + dy * radius * 1.1;
+      ctx.strokeStyle = "#e92f6d";
+      ctx.lineWidth = Math.max(2, radius * 0.07);
+      ctx.lineCap = "round";
+      const perp = { x: -dy, y: dx };
+      ctx.beginPath();
+      ctx.moveTo(cx + dx * radius * 0.7, cy + dy * radius * 0.7);
+      ctx.lineTo(tongueTipX, tongueTipY);
+      ctx.moveTo(tongueTipX, tongueTipY);
+      ctx.lineTo(tongueTipX + perp.x * radius * 0.15 + dx * radius * 0.08, tongueTipY + perp.y * radius * 0.15 + dy * radius * 0.08);
+      ctx.moveTo(tongueTipX, tongueTipY);
+      ctx.lineTo(tongueTipX - perp.x * radius * 0.15 + dx * radius * 0.08, tongueTipY - perp.y * radius * 0.15 + dy * radius * 0.08);
+      ctx.stroke();
+      // 蛇种专属头顶装饰
+      drawHeadDecoration(cx, cy, radius, type);
+    }
+
+    function drawHeadDecoration(cx, cy, radius, type) {
+      const { ctx } = els;
+      if (type.id === "apple") {
+        ctx.fillStyle = "#41ba27";
+        ctx.strokeStyle = "#2d8a1c";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(cx + radius * 0.05, cy - radius * 0.95, radius * 0.2, radius * 0.35, 0.3, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      } else if (type.id === "spark") {
+        ctx.fillStyle = "#fff36a";
+        ctx.strokeStyle = "#ffae00";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - radius * 0.1, cy - radius * 1.1);
+        ctx.lineTo(cx + radius * 0.15, cy - radius * 0.75);
+        ctx.lineTo(cx - radius * 0.05, cy - radius * 0.7);
+        ctx.lineTo(cx + radius * 0.1, cy - radius * 0.4);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else if (type.id === "coin") {
+        drawStar(cx, cy - radius * 0.95, radius * 0.22, "#fff6a6", "#ffae00");
+      }
+    }
+
+    function drawStar(cx, cy, r, fill, stroke) {
+      const { ctx } = els;
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i += 1) {
+        const a = (i * 2 * Math.PI / 5) - Math.PI / 2;
+        const a2 = a + Math.PI / 5;
+        if (i === 0) ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        else ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        ctx.lineTo(cx + Math.cos(a2) * r * 0.45, cy + Math.sin(a2) * r * 0.45);
+      }
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }
+
+    /* ---- 身体节装饰（按蛇种） ---- */
+    function drawBodyDecoration(cx, cy, radius, type, index) {
+      const { ctx } = els;
+      if (type.id === "apple") {
+        ctx.fillStyle = "rgba(233,47,47,0.55)";
+        ctx.beginPath();
+        ctx.arc(cx + radius * 0.2, cy + radius * 0.1, radius * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (type.id === "spark") {
+        ctx.strokeStyle = "rgba(255,243,106,0.85)";
+        ctx.lineWidth = Math.max(2, radius * 0.1);
+        ctx.beginPath();
+        ctx.moveTo(cx - radius * 0.3, cy - radius * 0.35);
+        ctx.lineTo(cx + radius * 0.1, cy);
+        ctx.lineTo(cx - radius * 0.15, cy + radius * 0.35);
+        ctx.stroke();
+      } else if (type.id === "coin") {
+        ctx.fillStyle = "rgba(255,246,166,0.9)";
+        ctx.beginPath();
+        ctx.arc(cx + radius * 0.15, cy - radius * 0.1, radius * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (type.id === "berry") {
+        ctx.fillStyle = "rgba(217,245,255,0.7)";
+        ctx.beginPath();
+        ctx.arc(cx - radius * 0.15, cy + radius * 0.2, radius * 0.12, 0, Math.PI * 2);
+        ctx.arc(cx + radius * 0.2, cy - radius * 0.15, radius * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (type.id === "rainbow") {
+        const colors = ["#ff5f6d", "#ffc371", "#58c915", "#45b8ff", "#8b5cff"];
+        ctx.strokeStyle = colors[index % colors.length];
+        ctx.lineWidth = Math.max(2, radius * 0.12);
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    /* ---- 立体苹果（心形 + 径向渐变 + 高光 + 投影 + 柄叶） ---- */
+    function drawTargetHint(apple) {
+      const { ctx } = els;
+      const left = apple.x * CELL_SIZE;
+      const top = apple.y * CELL_SIZE;
+      const inset = CELL_SIZE * 0.12;
+      const size = CELL_SIZE - inset * 2;
+      const radius = CELL_SIZE * 0.18;
+      const { cx, cy } = cellCenter(apple);
+
+      ctx.save();
+      ctx.fillStyle = CONFIG.targetHint.fill;
+      ctx.strokeStyle = CONFIG.targetHint.stroke;
+      ctx.lineWidth = Math.max(1.5, CELL_SIZE * 0.045);
+      ctx.beginPath();
+      ctx.roundRect(left + inset, top + inset, size, size, radius);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = CONFIG.targetHint.center;
+      ctx.beginPath();
+      ctx.arc(cx, cy, CELL_SIZE * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawApple(apple) {
+      drawGlossyTreat(apple);
+    }
+
+    function drawGlossyTreat(apple) {
+      const { ctx } = els;
+      const { cx, cy } = cellCenter(apple);
+      const radius = CELL_SIZE * CONFIG.visualScale.treatRadius;
+      const appleType = APPLE_TYPE_BY_ID[apple.type] || CONFIG.appleTypes[0];
+
+      if (drawGeneratedTreatSprite(apple, appleType, cx, cy, radius)) return;
+
+      if (appleType.id === "gold") {
+        const glow = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius * 2.1);
+        glow.addColorStop(0, "rgba(255,246,166,0.72)");
+        glow.addColorStop(1, "rgba(255,246,166,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + radius * 0.92, radius * 0.95, radius * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const grad = ctx.createRadialGradient(
+        cx - radius * 0.36, cy - radius * 0.42, radius * 0.1,
+        cx, cy + radius * 0.2, radius * 1.25
+      );
+      grad.addColorStop(0, appleType.light);
+      grad.addColorStop(0.5, appleType.fill);
+      grad.addColorStop(1, appleType.stroke);
+      ctx.fillStyle = grad;
+
+      ctx.beginPath();
+      if (appleType.effect === "slow") {
+        drawCrystalPath(ctx, cx, cy, radius);
+      } else if (appleType.effect === "shrink") {
+        ctx.moveTo(cx, cy - radius * 0.95);
+        ctx.bezierCurveTo(cx + radius * 0.92, cy - radius * 0.62, cx + radius * 0.9, cy + radius * 0.45, cx, cy + radius * 0.95);
+        ctx.bezierCurveTo(cx - radius * 0.9, cy + radius * 0.45, cx - radius * 0.92, cy - radius * 0.62, cx, cy - radius * 0.95);
+      } else {
+        ctx.arc(cx - radius * 0.32, cy + radius * 0.05, radius * 0.78, 0, Math.PI * 2);
+        ctx.arc(cx + radius * 0.32, cy + radius * 0.05, radius * 0.78, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      ctx.strokeStyle = appleType.stroke;
+      ctx.lineWidth = Math.max(2, radius * 0.1);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(0,0,0,0.15)";
+      ctx.beginPath();
+      ctx.moveTo(cx - radius * 0.18, cy - radius * 0.55);
+      ctx.quadraticCurveTo(cx, cy - radius * 0.3, cx + radius * 0.18, cy - radius * 0.55);
+      ctx.quadraticCurveTo(cx, cy - radius * 0.42, cx - radius * 0.18, cy - radius * 0.55);
+      ctx.fill();
+
+      ctx.strokeStyle = "#6c3611";
+      ctx.lineWidth = Math.max(3, radius * 0.12);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - radius * 0.55);
+      ctx.quadraticCurveTo(cx - radius * 0.08, cy - radius * 0.82, cx + radius * 0.2, cy - radius * 0.96);
+      ctx.stroke();
+
+      ctx.fillStyle = "#41ba27";
+      ctx.beginPath();
+      ctx.ellipse(cx + radius * 0.36, cy - radius * 0.82, radius * 0.24, radius * 0.12, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#2d8a1c";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255,255,255,0.62)";
+      ctx.beginPath();
+      ctx.ellipse(cx - radius * 0.36, cy - radius * 0.23, radius * 0.28, radius * 0.42, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.beginPath();
+      ctx.arc(cx - radius * 0.42, cy - radius * 0.36, radius * 0.09, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawSparkleBurst(cx, cy, radius, appleType);
+
+      if (appleType.effect === "slow") {
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold ${radius * 0.7}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("❄", cx, cy + radius * 0.15);
+      } else if (appleType.effect === "shrink") {
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold ${radius * 0.6}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("▽", cx, cy + radius * 0.15);
+      } else if (appleType.id === "gold") {
+        ctx.strokeStyle = "rgba(255,212,71,0.6)";
+        ctx.lineWidth = radius * 0.12;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 1.15, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawGoldenRunner(runner) {
+      const { ctx } = els;
+      const { cx, cy } = cellCenter(runner);
+      const radius = CELL_SIZE * 0.48;
+      ctx.save();
+      const pulse = 1 + Math.sin(performance.now() / 140) * 0.1;
+      ctx.fillStyle = "rgba(255, 211, 52, 0.22)";
+      ctx.beginPath(); ctx.arc(cx, cy, radius * 1.65 * pulse, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffd447";
+      ctx.strokeStyle = "#a76300";
+      ctx.lineWidth = CELL_SIZE * 0.07;
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#fff8bb";
+      ctx.beginPath(); ctx.arc(cx - radius * 0.23, cy - radius * 0.22, radius * 0.24, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#8f5300";
+      ctx.font = `900 ${CELL_SIZE * 0.45}px sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("跑", cx, cy + 1);
+      ctx.restore();
+    }
+
+    function drawMysteryChest(chest) {
+      const { ctx } = els;
+      const img = gameImages.rewardChests;
+      const rect = cellRect(chest);
+      const size = CELL_SIZE * 1.6;
+      ctx.save();
+      ctx.fillStyle = "rgba(156, 73, 237, 0.22)";
+      ctx.beginPath(); ctx.arc(rect.x + CELL_SIZE / 2, rect.y + CELL_SIZE / 2, size * 0.64, 0, Math.PI * 2); ctx.fill();
+      if (isImageReady(img)) {
+        const sw = img.naturalWidth / 4;
+        const sh = img.naturalHeight / 3;
+        ctx.drawImage(img, 3 * sw, sh, sw, sh, rect.x - size * 0.28, rect.y - size * 0.28, size, size);
+      } else {
+        ctx.fillStyle = "#7f3fbf";
+        ctx.fillRect(rect.x + CELL_SIZE * 0.15, rect.y + CELL_SIZE * 0.25, CELL_SIZE * 0.7, CELL_SIZE * 0.55);
+      }
+      ctx.restore();
+    }
+
+    function drawBossTarget(boss) {
+      const { ctx } = els;
+      const { cx, cy } = cellCenter(boss);
+      const radius = CELL_SIZE * 0.58;
+      ctx.save();
+      ctx.strokeStyle = "#ff6c34";
+      ctx.lineWidth = CELL_SIZE * 0.1;
+      ctx.setLineDash([CELL_SIZE * 0.14, CELL_SIZE * 0.1]);
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#b83212";
+      ctx.beginPath(); ctx.arc(cx, cy, radius * 0.62, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff6c7";
+      ctx.font = `900 ${CELL_SIZE * 0.42}px sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(`${boss.health}`, cx, cy + 1);
+      ctx.restore();
+    }
+
+    function drawGeneratedTreatSprite(apple, appleType, cx, cy, radius) {
+      const img = gameImages.powerupIcons;
+      const sprite = CONFIG.treatSprites[appleType.id];
+      if (!sprite || !isImageReady(img)) return false;
+
+      const cols = 4;
+      const rows = 4;
+      const sourceW = img.naturalWidth / cols;
+      const sourceH = img.naturalHeight / rows;
+      const size = CELL_SIZE * 1.55;
+      const x = cx - size / 2;
+      const y = cy - size / 2;
+
+      ctx.save();
+      if (appleType.id === "gold") {
+        const glow = ctx.createRadialGradient(cx, cy, radius * 0.1, cx, cy, radius * 2.2);
+        glow.addColorStop(0, "rgba(255,246,166,0.72)");
+        glow.addColorStop(1, "rgba(255,246,166,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "rgba(15,74,36,0.16)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + size * 0.34, size * 0.34, size * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.drawImage(
+        img,
+        sprite.col * sourceW,
+        sprite.row * sourceH,
+        sourceW,
+        sourceH,
+        x,
+        y,
+        size,
+        size
+      );
+      drawSparkleBurst(cx, cy, radius * 0.86, appleType);
+      ctx.restore();
+      return true;
+    }
+
+    function drawBoardPowerupHint(powerup) {
+      const type = BOARD_POWERUP_BY_ID[powerup.type] || CONFIG.boardPowerupTypes[0];
+      const { ctx } = els;
+      const { cx, cy } = cellCenter(powerup);
+      const radius = CELL_SIZE * 0.53;
+
+      ctx.save();
+      const glow = ctx.createRadialGradient(cx, cy, radius * 0.1, cx, cy, radius * 1.7);
+      glow.addColorStop(0, `${type.color}70`);
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 1.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `${type.color}aa`;
+      ctx.lineWidth = Math.max(2, CELL_SIZE * 0.045);
+      ctx.setLineDash([CELL_SIZE * 0.16, CELL_SIZE * 0.12]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 0.92, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawAtlasSpriteContained(img, sx, sy, sw, sh, dx, dy, dw, dh) {
+      const scale = Math.min(dw / sw, dh / sh);
+      const width = sw * scale;
+      const height = sh * scale;
+      ctx.drawImage(img, sx, sy, sw, sh, dx + (dw - width) / 2, dy + (dh - height) / 2, width, height);
+    }
+
+    function drawBoardPowerup(powerup) {
+      const type = BOARD_POWERUP_BY_ID[powerup.type] || CONFIG.boardPowerupTypes[0];
+      const img = gameImages.powerupIconsV2;
+      const { ctx } = els;
+      const { cx, cy } = cellCenter(powerup);
+      const size = CELL_SIZE * 1.84;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(15,74,36,0.18)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + size * 0.34, size * 0.32, size * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (isImageReady(img)) {
+        const cols = 3;
+        const rows = 2;
+        const sourceW = img.naturalWidth / cols;
+        const sourceH = img.naturalHeight / rows;
+        drawAtlasSpriteContained(
+          img,
+          type.artCol * sourceW,
+          type.artRow * sourceH,
+          sourceW,
+          sourceH,
+          cx - size / 2,
+          cy - size / 2,
+          size,
+          size
+        );
+      } else {
+        ctx.fillStyle = type.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, CELL_SIZE * 0.36, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold ${CELL_SIZE * 0.36}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(type.name.slice(0, 1), cx, cy);
+      }
+      ctx.restore();
+    }
+
+    function drawPowerupLabel(powerup) {
+      const type = BOARD_POWERUP_BY_ID[powerup.type] || CONFIG.boardPowerupTypes[0];
+      const { ctx } = els;
+      const { cx, cy } = cellCenter(powerup);
+      const label = type.name.length > 3 ? type.name.slice(0, 3) : type.name;
+      const width = Math.max(CELL_SIZE * 1.35, label.length * CELL_SIZE * 0.48);
+      const height = CELL_SIZE * 0.34;
+      const x = cx - width / 2;
+      const y = cy + CELL_SIZE * 0.55;
+      ctx.save();
+      ctx.fillStyle = "rgba(10, 61, 42, 0.86)";
+      ctx.strokeStyle = `${type.color}cc`;
+      ctx.lineWidth = Math.max(1.5, CELL_SIZE * 0.035);
+      ctx.beginPath();
+      ctx.roundRect(x, y, width, height, height / 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fffdf0";
+      ctx.font = `900 ${Math.max(9, CELL_SIZE * 0.24)}px Trebuchet MS, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, cx, y + height / 2 + 0.5);
+      ctx.restore();
+    }
+
+    function drawCrystalPath(ctx, cx, cy, radius) {
+      ctx.moveTo(cx, cy - radius * 0.95);
+      ctx.lineTo(cx + radius * 0.72, cy - radius * 0.18);
+      ctx.lineTo(cx + radius * 0.42, cy + radius * 0.88);
+      ctx.lineTo(cx - radius * 0.42, cy + radius * 0.88);
+      ctx.lineTo(cx - radius * 0.72, cy - radius * 0.18);
+      ctx.closePath();
+    }
+
+    function drawSparkleBurst(cx, cy, radius, appleType) {
+      const { ctx } = els;
+      ctx.save();
+      ctx.strokeStyle = appleType.sparkle || "#fff";
+      ctx.lineWidth = Math.max(1.5, radius * 0.08);
+      for (let i = 0; i < 4; i += 1) {
+        const angle = i * Math.PI / 2 + performance.now() / 900;
+        const sx = cx + Math.cos(angle) * radius * CONFIG.visualScale.sparkleScale;
+        const sy = cy + Math.sin(angle) * radius * CONFIG.visualScale.sparkleScale;
+        ctx.beginPath();
+        ctx.moveTo(sx - radius * 0.15, sy);
+        ctx.lineTo(sx + radius * 0.15, sy);
+        ctx.moveTo(sx, sy - radius * 0.15);
+        ctx.lineTo(sx, sy + radius * 0.15);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    /* ---- 特效层：粒子 / 飘字（阶段1 动效） ---- */
+    function drawEffects() {
+      const { ctx } = els;
+      const now = performance.now();
+      // 过滤掉过期特效
+      state.effects = state.effects.filter(e => now - e.bornAt < e.life);
+      state.effects.forEach(e => {
+        const age = (now - e.bornAt) / e.life;  // 0→1
+        if (e.kind === "particle") {
+          const px = e.x + e.vx * age * 40;
+          const py = e.y + e.vy * age * 40 + age * age * 30; // 重力
+          const alpha = 1 - age;
+          const r = e.size * (1 - age * 0.5);
+          ctx.fillStyle = e.color.replace("ALPHA", alpha.toFixed(2));
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (e.kind === "floatText") {
+          const py = e.y - age * 50;
+          const alpha = 1 - age;
+          const theme = getFloatTextTheme(e.text);
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, alpha * 1.35);
+          ctx.font = "800 31px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          const paddingX = 22;
+          const height = 46;
+          const width = Math.max(112, Math.ceil(ctx.measureText(e.text).width + paddingX * 2));
+          const left = e.x - width / 2;
+          const top = py - height / 2;
+
+          // Every reward message gets its own opaque plaque, so board texture never hides the words.
+          ctx.shadowColor = "rgba(8, 37, 23, 0.52)";
+          ctx.shadowBlur = 12;
+          ctx.shadowOffsetY = 5;
+          ctx.fillStyle = "rgba(8, 53, 36, 0.94)";
+          ctx.beginPath();
+          ctx.roundRect(left, top, width, height, 18);
+          ctx.fill();
+          ctx.shadowColor = "transparent";
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = theme.border;
+          ctx.stroke();
+          ctx.fillStyle = "rgba(255, 255, 255, 0.20)";
+          ctx.beginPath();
+          ctx.roundRect(left + 4, top + 4, width - 8, height * 0.38, 13);
+          ctx.fill();
+          ctx.fillStyle = "#fffdf2";
+          ctx.strokeStyle = "rgba(24, 48, 34, 0.9)";
+          ctx.lineWidth = 2;
+          ctx.strokeText(e.text, e.x, py + 1);
+          ctx.fillText(e.text, e.x, py + 1);
+          ctx.restore();
+        }
+      });
+    }
+
+    function getFloatTextTheme(text) {
+      if (/磁铁|糖果|糖豆/.test(text)) return { border: "#ff6b75" };
+      if (/金苹果|金|首领|挑战/.test(text)) return { border: "#ffd84a" };
+      if (/礼盒|宝箱|到手/.test(text)) return { border: "#8ce9c6" };
+      if (/护盾|救场/.test(text)) return { border: "#78d5ff" };
+      if (/火焰/.test(text)) return { border: "#ff9c54" };
+      return { border: "#a8ef79" };
+    }
+
+    /* ---- 触发特效的辅助函数 ---- */
+    function spawnEatEffect(cx, cy, appleType) {
+      // 粒子爆裂
+      const colors = [appleType.fill, appleType.light, "#fff"];
+      const perks = getSnakePerks(state.selectedSnakeType.id);
+      const particleCount = perks.bonusEffect ? 16 : 10;
+      for (let i = 0; i < particleCount; i += 1) {
+        const angle = (i / particleCount) * Math.PI * 2;
+        const speed = 0.6 + Math.random() * 0.6;
+        state.effects.push({
+          kind: "particle",
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.3,
+          size: CELL_SIZE * (0.08 + Math.random() * 0.06),
+          color: `rgba(${hexToRgb(colors[i % colors.length])},ALPHA)`,
+          bornAt: performance.now(),
+          life: 600
+        });
+      }
+      // 飘字
+      state.effects.push({
+        kind: "floatText",
+        x: cx, y: cy,
+        text: `+${appleType.points}`,
+        bornAt: performance.now(),
+        life: 900
+      });
+      if (perks.bonusEffect) {
+        state.effects.push({
+          kind: "floatText",
+          x: cx,
+          y: cy - CELL_SIZE * 0.55,
+          text: "奖励!",
+          bornAt: performance.now(),
+          life: 900
+        });
+      }
+    }
+
+    function hexToRgb(hex) {
+      const h = hex.replace("#", "");
+      const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+      return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+    }
+
+
+    /* =========================================================================
+       UI 同步：把 state 投影到 DOM
+       ========================================================================= */
+    function syncHud() {
+      els.score.textContent = state.score;
+      els.best.textContent = state.best;
+      els.roundCount.textContent = state.roundHistory.length;
+      els.coinHud.textContent = state.coins;
+      renderCurrentSnakeHud();
+      renderPowerStatus();
+    }
+
+    function renderSnakeCards() {
+      CONFIG.snakeTypes.forEach(type => {
+        const progress = getSnakeProgress(type.id);
+        const levelEl = document.querySelector(`[data-level-for="${type.id}"]`);
+        const xpEl = document.querySelector(`[data-xp-for="${type.id}"]`);
+        if (levelEl) levelEl.textContent = `${progress.level}级`;
+        if (xpEl) {
+          xpEl.textContent = progress.level >= CONFIG.levelThresholds.length
+            ? `${progress.xp}经验 满级`
+            : `${progress.xp}/${progress.nextLevelXp}经验`;
+        }
+      });
+      renderCurrentSnakeHud();
+      renderSnakeDetail();
+    }
+
+    function renderCurrentSnakeHud() {
+      const progress = getSnakeProgress(state.selectedSnakeType.id);
+      const snakeIndex = CONFIG.snakeTypes.findIndex(type => type.id === state.selectedSnakeType.id);
+      els.currentSnakeArt.style.backgroundImage = 'url("assets/snake-portraits-royal-v3-crisp.png")';
+      els.currentSnakeArt.style.backgroundSize = "400% 300%";
+      els.currentSnakeArt.style.backgroundPosition = `${(snakeIndex % 4) * 33.333}% ${Math.floor(snakeIndex / 4) * 50}%`;
+      els.currentSnakeHud.textContent = state.selectedSnakeType.name;
+      els.currentLevelHud.textContent = `${progress.level}级`;
+      els.currentXpHud.textContent = progress.level >= CONFIG.levelThresholds.length
+        ? `${progress.xp}经验 满级`
+        : `${progress.xp}/${progress.nextLevelXp}经验`;
+    }
+
+    function renderHistory() {
+      els.roundCount.textContent = state.roundHistory.length;
+      els.historyList.innerHTML = "";
+      els.historyEmpty.hidden = state.roundHistory.length > 0;
+      state.roundHistory.forEach((round, index) => {
+        const item = document.createElement("li");
+        const left = document.createElement("span");
+        const right = document.createElement("span");
+        left.textContent = `第${state.roundHistory.length - index}局 ${round.snake}`;
+        right.textContent = `${round.score}分 ${round.time}`;
+        item.append(left, right);
+        els.historyList.append(item);
+      });
+    }
+
+    function renderShop() {
+      els.coinHud.textContent = state.coins;
+      els.featureCoins.textContent = state.coins;
+      els.boardShopList.innerHTML = "";
+      CONFIG.shopItems.forEach(item => {
+        const type = BOARD_POWERUP_BY_ID[item.id];
+        if (!type) return;
+        const canUseNow = ["playing", "paused"].includes(state.phase);
+        const buy = document.createElement("button");
+        buy.type = "button";
+        buy.className = "shop-use";
+        buy.dataset.feature = item.id;
+        buy.title = type.note;
+        buy.disabled = !canUseNow || state.coins < item.cost;
+        buy.addEventListener("click", () => buyShopItem(item.id));
+
+        const icon = document.createElement("span");
+        icon.className = "shop-art";
+        icon.style.backgroundPosition = shopShowcaseSpritePosition(item.id);
+        icon.setAttribute("aria-hidden", "true");
+
+        const name = document.createElement("span");
+        name.className = "shop-name";
+        name.textContent = type.shopName || type.name;
+
+        const note = document.createElement("span");
+        note.className = "shop-note";
+        note.textContent = item.note;
+
+        const meta = document.createElement("span");
+        meta.className = "shop-meta";
+        const price = document.createElement("span");
+        price.className = "shop-price";
+        price.textContent = `${item.cost}糖豆`;
+        const count = document.createElement("span");
+        count.className = "shop-count";
+        count.textContent = `余额可买 ${getShopAffordableCount(item)} 次`;
+        const stateText = document.createElement("span");
+        stateText.className = "shop-state";
+        stateText.textContent = getShopStateText(item, canUseNow);
+        meta.append(price, count, stateText);
+
+        buy.append(icon, name, note, meta);
+        els.boardShopList.append(buy);
+      });
+    }
+
+    function getShopAffordableCount(item) {
+      if (!item || item.cost <= 0) return 0;
+      return Math.floor(state.coins / item.cost);
+    }
+
+    function getShopStateText(item, canUseNow) {
+      const now = performance.now();
+      const pending = Number(state.pendingShopItems[item.id] || 0);
+      if (pending > 0) return `已备x${pending}`;
+      if (!canUseNow) return "开局后用";
+      if (item.id === "magnet" && state.powerups.magnetUntil > now) {
+        return `${Math.ceil((state.powerups.magnetUntil - now) / 1000)}秒`;
+      }
+      if (item.id === "slowTime" && state.timing.speedEffectUntil > now) {
+        return `${Math.ceil((state.timing.speedEffectUntil - now) / 1000)}秒`;
+      }
+      if (item.id === "shield" && state.powerups.shieldCharges > 0) {
+        return `护盾x${state.powerups.shieldCharges}`;
+      }
+      return state.phase === "paused" ? "暂停可买" : "点用";
+    }
+
+    function renderTasks() {
+      els.taskList.innerHTML = "";
+      CONFIG.tasks.forEach(task => {
+        const done = Boolean(state.tasks.completed[task.id]);
+        const progress = Math.min(task.goal, Number(state.tasks.progress[task.id] || getTaskProgress(task)));
+        const row = document.createElement("div");
+        row.className = "task-item";
+
+        const text = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = task.name;
+        const note = document.createElement("span");
+        note.textContent = done ? `已完成，获得 ${task.reward} 糖豆` : `奖励 ${task.reward} 糖豆`;
+        text.append(name, note);
+
+        const status = document.createElement("span");
+        status.className = "task-status";
+        status.textContent = done ? "完成" : `${progress}/${task.goal}`;
+
+        row.append(text, status);
+        els.taskList.append(row);
+      });
+    }
+
+    function renderAdventurePanel() {
+      const mission = state.roundMission;
+      els.roundMissionText.textContent = mission
+        ? `${mission.completed ? "完成" : "挑战"}：${mission.note} ${Math.min(mission.goal, getRoundMetric(mission.metric))}/${mission.goal}`
+        : "开始后抽取挑战";
+      els.roundEventText.textContent = state.roundEvent
+        ? `本局地图：${state.roundMap?.name || "春日果园"} · ${state.roundEvent.name}：${state.roundEvent.note}`
+        : "本局果园：普通果园";
+    }
+
+    function renderDailyTasks() {
+      ensureDailyTasks();
+      els.dailyTaskList.innerHTML = "";
+      CONFIG.dailyTasks.forEach(task => {
+        const done = Boolean(state.daily.completed[task.id]);
+        const progress = Math.min(task.goal, Number(state.daily.progress[task.id] || 0));
+        const row = document.createElement("div");
+        row.className = "task-item";
+        const text = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = task.name;
+        const note = document.createElement("span");
+        note.textContent = done ? `已领 ${task.reward} 糖豆` : `完成得 ${task.reward} 糖豆`;
+        text.append(name, note);
+        const status = document.createElement("span");
+        status.className = "task-status";
+        status.textContent = done ? "完成" : `${progress}/${task.goal}`;
+        row.append(text, status);
+        els.dailyTaskList.append(row);
+      });
+    }
+
+    function renderCollection() {
+      els.collectionList.innerHTML = "";
+      CONFIG.collectionItems.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "collection-item";
+        const mark = document.createElement("span");
+        mark.className = "collection-mark";
+        mark.textContent = item.mark;
+        const text = document.createElement("span");
+        const count = Number(state.collection[item.id] || 0);
+        text.textContent = count > 0 ? `${item.name} x${count}` : `${item.name} 未解锁`;
+        row.append(mark, text);
+        els.collectionList.append(row);
+      });
+    }
+
+    function renderChestChoices() {
+      const choices = state.chestChoices || [];
+      els.chestChoices.innerHTML = "";
+      els.chestChoices.hidden = choices.length === 0;
+      choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chest-choice";
+        button.title = choice.note;
+
+        const art = document.createElement("span");
+        art.className = "chest-choice-art";
+        art.style.backgroundPosition = shopShowcaseSpritePosition(choice.id);
+        art.setAttribute("aria-hidden", "true");
+        const title = document.createElement("strong");
+        title.className = "chest-choice-title";
+        title.textContent = choice.name;
+        const note = document.createElement("span");
+        note.className = "chest-choice-note";
+        note.textContent = choice.note;
+        const claim = document.createElement("span");
+        claim.className = "chest-choice-claim";
+        claim.textContent = "点击领取";
+        button.append(art, title, note, claim);
+        button.addEventListener("click", () => chooseMysteryChestReward(choice.id));
+        els.chestChoices.append(button);
+      });
+    }
+
+    function renderSnakeDetail() {
+      const type = state.selectedSnakeType;
+      const progress = getSnakeProgress(type.id);
+      const perks = getSnakePerks(type.id);
+      const reward = perks.reward;
+      const detailTitle = els.snakeDetail.querySelector("h3");
+      const detailArt = els.snakeDetail.querySelector(".snake-detail-art");
+      detailArt.className = `snake-detail-art ${type.id}`;
+      detailTitle.textContent = type.name;
+      els.snakeDetail.querySelector('[data-detail-role="note"]').textContent = `${type.note} ${getSnakeTalent(type.id)}`;
+      els.snakeDetail.querySelector('[data-detail-role="level"]').textContent = `${progress.level}级`;
+      els.snakeDetail.querySelector('[data-detail-role="xp"]').textContent = progress.level >= CONFIG.levelThresholds.length
+        ? `${progress.xp}经验 满级`
+        : `${progress.xp}/${progress.nextLevelXp}经验`;
+      els.snakeDetail.querySelector('[data-detail-role="reward"]').textContent = `${reward.level}级：${reward.name}。${reward.note}`;
+    }
+
+    function renderPowerStatus() {
+      const now = performance.now();
+      const status = [];
+      if (state.powerups.magnetUntil > now) {
+        status.push(`磁铁${Math.ceil((state.powerups.magnetUntil - now) / 1000)}秒`);
+      }
+      if (state.timing.speedEffectUntil > now) {
+        status.push(`慢动作${Math.ceil((state.timing.speedEffectUntil - now) / 1000)}秒`);
+      }
+      if (state.powerups.shieldCharges > 0) {
+        status.push(`护盾x${state.powerups.shieldCharges}`);
+      }
+      if (status.length) {
+        els.currentSnakeHud.textContent = `${state.selectedSnakeType.name} · ${status.join(" ")}`;
+      }
+    }
+
+    function setHistoryOpen(open) {
+      els.historyPanel.hidden = !open;
+      els.recordToggle.setAttribute("aria-expanded", String(open));
+    }
+
+    function setFeatureOpen(open) {
+      els.featurePanel.hidden = !open;
+      els.featureToggle.setAttribute("aria-expanded", String(open));
+      if (open) {
+        setHistoryOpen(false);
+        renderTasks();
+        renderShop();
+      }
+    }
+
+    function showMessage(title, text, buttonText) {
+      els.messageTitle.textContent = title;
+      els.messageText.textContent = text;
+      els.startButton.textContent = buttonText;
+      els.startButton.hidden = false;
+      els.message.hidden = false;
+    }
+
+    function hideMessage() {
+      els.message.hidden = true;
+    }
+
+    /* ---- 玩家切换器渲染 ---- */
+    function renderPlayerSwitcher() {
+      // 清掉旧头像（保留末尾的 + 按钮）
+      els.playerBar.querySelectorAll(".player-avatar, .player-name-tag").forEach(el => el.remove());
+
+      const ids = Object.keys(state.players);
+      ids.forEach(id => {
+        const p = state.players[id];
+        const btn = document.createElement("button");
+        btn.className = "player-avatar";
+        btn.type = "button";
+        btn.dataset.player = id;
+        btn.setAttribute("aria-pressed", String(id === state.activePlayerId));
+        btn.setAttribute("aria-label", id === state.activePlayerId
+          ? `${p.name}（当前），点击编辑名字和头像`
+          : `${p.name}，点击切换`);
+        btn.textContent = p.avatar;
+        btn.title = p.name;
+        btn.addEventListener("click", () => {
+          if (id === state.activePlayerId) {
+            openPlayerModal(id);
+            return;
+          }
+          switchPlayer(id);
+        });
+        els.playerBar.insertBefore(btn, els.playerEdit);
+        if (id === state.activePlayerId) {
+          const nameTag = document.createElement("span");
+          nameTag.className = "player-name-tag";
+          nameTag.textContent = p.name;
+          nameTag.title = p.name;
+          els.playerBar.insertBefore(nameTag, els.playerEdit);
+        }
+      });
+
+      // 达到上限禁用新建
+      els.playerAdd.disabled = ids.length >= CONFIG.players.maxCount;
+    }
+
+    /* ---- 主题切换器渲染 ---- */
+    function renderThemeSwitcher() {
+      els.themeSwitcher.innerHTML = "";
+      CONFIG.themes.forEach(theme => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "theme-btn";
+        btn.textContent = theme.name;
+        btn.setAttribute("aria-pressed", String(theme.id === state.themeId));
+        btn.addEventListener("click", () => switchTheme(theme.id));
+        els.themeSwitcher.append(btn);
+      });
+    }
+
+    function switchTheme(themeId) {
+      state.themeId = themeId;
+      // 持久化到当前玩家
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].themeId = themeId;
+        savePlayers();
+      }
+      renderThemeSwitcher();
+    }
+
+    /* ---- 玩家新建/编辑弹窗 ---- */
+    let modalEditingId = null;   // null=新建模式；非null=编辑该玩家
+    let modalSelectedAvatar = CONFIG.players.defaultAvatars[0];
+
+    function openPlayerModal(editId) {
+      modalEditingId = editId || null;
+      if (editId) {
+        const p = state.players[editId];
+        els.playerModalTitle.textContent = "编辑玩家";
+        els.playerNameInput.value = p.name;
+        modalSelectedAvatar = p.avatar;
+        els.playerDeleteBtn.hidden = false;
+      } else {
+        els.playerModalTitle.textContent = "新建玩家";
+        els.playerNameInput.value = "";
+        modalSelectedAvatar = CONFIG.players.defaultAvatars[0];
+        els.playerDeleteBtn.hidden = true;
+      }
+      renderAvatarPicker();
+      els.playerModal.hidden = false;
+      els.playerNameInput.focus();
+    }
+
+    function closePlayerModal() {
+      els.playerModal.hidden = true;
+      modalEditingId = null;
+    }
+
+    function renderAvatarPicker() {
+      els.avatarPicker.innerHTML = "";
+      CONFIG.players.defaultAvatars.forEach(emoji => {
+        const opt = document.createElement("button");
+        opt.type = "button";
+        opt.className = "avatar-option";
+        opt.textContent = emoji;
+        opt.setAttribute("aria-pressed", String(emoji === modalSelectedAvatar));
+        opt.addEventListener("click", () => {
+          modalSelectedAvatar = emoji;
+          renderAvatarPicker();
+        });
+        els.avatarPicker.append(opt);
+      });
+    }
+
+    function handlePlayerSave() {
+      const name = els.playerNameInput.value.trim();
+      if (!name) {
+        els.playerNameInput.focus();
+        return;
+      }
+      if (modalEditingId) {
+        renamePlayer(modalEditingId, name, modalSelectedAvatar);
+      } else {
+        const newId = createPlayer(name, modalSelectedAvatar);
+        if (newId) switchPlayer(newId); // 新建后直接切到新玩家
+      }
+      closePlayerModal();
+    }
+
+    function handlePlayerDelete() {
+      if (!modalEditingId) return;
+      const p = state.players[modalEditingId];
+      const confirmed = window.confirm(`确定删除玩家「${p.name}」吗？该玩家的所有记录将永久消失。`);
+      if (!confirmed) return;
+      const deletingActive = modalEditingId === state.activePlayerId;
+      deletePlayer(modalEditingId);
+      closePlayerModal();
+      if (deletingActive) {
+        // 切到新激活玩家时给出提示
+        showMessage("已切换玩家",
+          `现在是 ${state.players[state.activePlayerId].name} 的存档。`,
+          "开始游戏");
+      }
+    }
+
+    /* ---- 阶段状态机：phase 切换时统一更新 UI ---- */
+    function setPhase(phase) {
+      state.phase = phase;
+      if (phase === "playing") {
+        hideMessage();
+      }
+      renderShop();
+      // 其他阶段的提示由调用方通过 showMessage 显式给出
+    }
+
+    /* =========================================================================
+       LOOP 层：固定步长游戏循环（requestAnimationFrame + accumulator）
+       替代原 setInterval，速度变化更平稳，且支持阶段1的逐帧动画
+       ========================================================================= */
+    let rafId = null;
+
+    function loop(now) {
+      if (state.timing.lastFrameAt === 0) state.timing.lastFrameAt = now;
+      const delta = now - state.timing.lastFrameAt;
+      state.timing.lastFrameAt = now;
+
+      if (state.phase === "playing") {
+        // 减速效果到期检查
+        if (state.timing.speedEffectUntil > 0 && now >= state.timing.speedEffectUntil) {
+          state.timing.tickMs = getRoundTickMs();
+          state.timing.speedEffectUntil = 0;
+        }
+        state.timing.accumulator += delta;
+        // 防止切后台积压过久导致一次性大跳
+        if (state.timing.accumulator > state.timing.tickMs * 5) {
+          state.timing.accumulator = state.timing.tickMs;
+        }
+        while (state.timing.accumulator >= state.timing.tickMs) {
+          step(now);
+          state.timing.accumulator -= state.timing.tickMs;
+          if (state.phase !== "playing") break; // step 内可能 endGame
+        }
+      } else {
+        state.timing.accumulator = 0;
+      }
+
+      render();
+      updateTaskProgress();
+      syncHud();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    /* =========================================================================
+       INPUT 层：键盘 + 触控
+       ========================================================================= */
+    document.addEventListener("keydown", event => {
+      const keyMap = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (state.phase === "playing" || state.phase === "paused") {
+          togglePause();
+        } else if (state.phase === "gameover" && state.pendingChest) {
+          claimRoundChest();
+        } else if (state.phase === "menu" || state.phase === "gameover") {
+          newGame();
+        }
+      } else if (keyMap[event.key]) {
+        event.preventDefault();
+        setDirection(keyMap[event.key]);
+        // 原行为：在遮罩显示时按方向键直接开新局
+        if ((state.phase === "menu" || state.phase === "gameover") && !els.message.hidden) {
+          newGame();
+        }
+      } else if (event.key === "Escape") {
+        setHistoryOpen(false);
+        setFeatureOpen(false);
+      }
+    });
+
+    els.controls.forEach(button => {
+      button.addEventListener("click", () => setDirection(button.dataset.dir));
+    });
+
+    els.snakeOptionButtons.forEach(button => {
+      button.addEventListener("click", () => chooseSnake(button.dataset.snake));
+    });
+
+    els.recordToggle.addEventListener("click", event => {
+      event.stopPropagation();
+      setHistoryOpen(els.historyPanel.hidden);
+      if (!els.historyPanel.hidden) setFeatureOpen(false);
+    });
+
+    els.historyPanel.addEventListener("click", event => event.stopPropagation());
+
+    els.featureToggle.addEventListener("click", event => {
+      event.stopPropagation();
+      setFeatureOpen(els.featurePanel.hidden);
+    });
+
+    els.featurePanel.addEventListener("click", event => event.stopPropagation());
+
+    document.addEventListener("click", () => {
+      setHistoryOpen(false);
+      setFeatureOpen(false);
+    });
+
+    els.startButton.addEventListener("click", () => {
+      if (state.phase === "paused") {
+        togglePause();
+      } else if (state.phase === "gameover" && state.pendingChest) {
+        claimRoundChest();
+        return;
+      } else {
+        newGame();
+      }
+    });
+
+    els.restartButton.addEventListener("click", () => newGame());
+    els.motionToggle.addEventListener("click", () => {
+      const reduced = document.body.classList.toggle("motion-reduced");
+      els.motionToggle.setAttribute("aria-pressed", String(reduced));
+      els.motionToggle.textContent = reduced ? "静效" : "动效";
+    });
+
+    /* ---- 玩家弹窗事件 ---- */
+    els.playerEdit.addEventListener("click", () => openPlayerModal(state.activePlayerId));
+    els.playerAdd.addEventListener("click", () => {
+      if (Object.keys(state.players).length >= CONFIG.players.maxCount) return;
+      openPlayerModal(null);
+    });
+    els.playerSaveBtn.addEventListener("click", handlePlayerSave);
+    els.playerCancelBtn.addEventListener("click", closePlayerModal);
+    els.playerDeleteBtn.addEventListener("click", handlePlayerDelete);
+    els.playerNameInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") { event.preventDefault(); handlePlayerSave(); }
+      if (event.key === "Escape") { event.preventDefault(); closePlayerModal(); }
+    });
+    els.playerModal.addEventListener("click", event => {
+      // 点遮罩空白处关闭
+      if (event.target === els.playerModal) closePlayerModal();
+    });
+
+    /* =========================================================================
+       INIT：初始化（沿用原版菜单页的静态演示画面）
+       ========================================================================= */
+    function init() {
+      loadGameImages();
+      loadStorage();
+      // 初始演示蛇身（与原版菜单页一致）
+      state.snake.body = [
+        { x: 15, y: 15 },
+        { x: 14, y: 15 },
+        { x: 13, y: 15 }
+      ];
+      // 初始演示苹果（与原版菜单页一致）
+      state.apples = [
+        { x: 24, y: 5, type: "normal" },
+        { x: 23, y: 18, type: "gold" },
+        { x: 7, y: 23, type: "slow" },
+        { x: 24, y: 24, type: "shrink" },
+        { x: 5, y: 11, type: "normal" },
+        { x: 16, y: 6, type: "gold" },
+        { x: 12, y: 24, type: "normal" },
+        { x: 22, y: 23, type: "slow" },
+        { x: 23, y: 21, type: "normal" },
+        { x: 3, y: 23, type: "shrink" },
+        { x: 22, y: 10, type: "normal" },
+        { x: 9, y: 18, type: "gold" }
+      ];
+      state.timing.tickMs = state.selectedSnakeType.tickMs;
+      els.snakeOptionButtons.forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.snake === state.selectedSnakeType.id));
+      });
+      renderSnakeCards();
+      renderSnakeDetail();
+      renderHistory();
+      renderPlayerSwitcher();
+      renderThemeSwitcher();
+      renderTasks();
+      renderDailyTasks();
+      renderCollection();
+      renderAdventurePanel();
+      renderShop();
+      syncHud();
+      // 显示欢迎信息（当前玩家）
+      showMessage("先选一条小蛇",
+        `${state.players[state.activePlayerId].name}，选中：${state.selectedSnakeType.name}。${state.selectedSnakeType.note}`,
+        "开始游戏");
+      rafId = requestAnimationFrame(loop);
+    }
+
+    init();
+  </script>
+</body>
+</html>

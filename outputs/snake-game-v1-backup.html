@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>贪吃蛇吃苹果</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --leaf: #2f8f2f;
+      --leaf-dark: #176c25;
+      --grass: #b9ef58;
+      --cream: #fffbe8;
+      --grid: #9fcf64;
+      --apple: #e92f2f;
+      --blue: #138ce8;
+      --text: #164d22;
+      --shadow: 0 14px 28px rgba(32, 97, 22, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 20%, rgba(45, 160, 66, 0.36) 0 7%, transparent 8%),
+        radial-gradient(circle at 95% 76%, rgba(35, 138, 60, 0.28) 0 10%, transparent 11%),
+        linear-gradient(135deg, #dfff7a 0%, var(--grass) 45%, #82d944 100%);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      padding: 6px;
+    }
+
+    .game {
+      position: relative;
+      width: min(1260px, 100%);
+      height: calc(100vh - 12px);
+      max-height: calc(100vh - 12px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 6px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #58c915;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 0.9;
+      text-shadow:
+        0 4px 0 #0b5c21,
+        0 0 0 #fff,
+        0 9px 16px rgba(40, 93, 17, 0.22);
+      -webkit-text-stroke: 3px #fff;
+      paint-order: stroke fill;
+    }
+
+    .stats {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.78);
+      border: 2px solid rgba(111, 186, 46, 0.35);
+      border-radius: 12px;
+      padding: 3px 6px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat {
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .stat.status-stat {
+      min-width: 104px;
+      text-align: left;
+    }
+
+    .label {
+      display: block;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+      color: #2d7428;
+    }
+
+    .value {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 900;
+      color: #0c4a1d;
+    }
+
+    .restart,
+    .record-toggle {
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(#45b8ff, var(--blue));
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      min-height: 36px;
+      padding: 0 12px;
+      box-shadow: inset 0 -4px 0 rgba(0, 65, 133, 0.3), var(--shadow);
+      cursor: pointer;
+    }
+
+    .record-toggle {
+      background: linear-gradient(#ffe779, #f0a713);
+      box-shadow: inset 0 -4px 0 rgba(125, 73, 0, 0.28), var(--shadow);
+    }
+
+    .restart:active,
+    .record-toggle:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 -3px 0 rgba(0, 65, 133, 0.3), 0 8px 18px rgba(32, 97, 22, 0.16);
+    }
+
+    .play-layout {
+      --board-size: min(calc(100vh - 74px), calc(100vw - 218px), 860px);
+      display: grid;
+      grid-template-columns: minmax(78px, 94px) var(--board-size) minmax(78px, 94px);
+      align-items: stretch;
+      justify-content: center;
+      justify-self: center;
+      width: calc(var(--board-size) + 200px);
+      max-width: 100%;
+      gap: 6px;
+      min-height: 0;
+    }
+
+    .snake-column {
+      display: grid;
+      grid-template-rows: repeat(3, auto);
+      align-content: center;
+      gap: 6px;
+      min-height: 0;
+    }
+
+    .snake-option {
+      border: 2px solid rgba(27, 116, 31, 0.25);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--text);
+      min-height: 0;
+      padding: 5px 4px;
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      justify-items: center;
+      gap: 3px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .snake-option[aria-pressed="true"] {
+      border-color: #16812d;
+      background: #fffbe8;
+      box-shadow:
+        inset 0 0 0 3px rgba(106, 207, 54, 0.3),
+        var(--shadow);
+    }
+
+    .snake-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .snake-avatar.sprout {
+      background: linear-gradient(#70e73d, #2da226);
+    }
+
+    .snake-avatar.apple {
+      background: linear-gradient(#ffdf6a, #ff8f5a);
+    }
+
+    .snake-avatar.spark {
+      background: linear-gradient(#8fe8ff, #357aff);
+    }
+
+    .snake-avatar.berry {
+      background: linear-gradient(#9be5ff, #4b88ff);
+    }
+
+    .snake-avatar.coin {
+      background: linear-gradient(#ffe779, #f0a713);
+    }
+
+    .snake-avatar.rainbow {
+      background: conic-gradient(#ff5f6d, #ffc371, #58c915, #45b8ff, #8b5cff, #ff5f6d);
+    }
+
+    .snake-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 900;
+      color: #0c4a1d;
+      white-space: nowrap;
+    }
+
+    .snake-level {
+      display: inline-block;
+      margin: 1px 0 0;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: #dfff7a;
+      color: #176c25;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .snake-xp {
+      display: inline-block;
+      margin-left: 4px;
+      color: #176c25;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .snake-skill {
+      display: block;
+      font-size: 12px;
+      line-height: 1.18;
+      font-weight: 800;
+      color: #2d7428;
+    }
+
+    @media (min-width: 901px) {
+      .snake-skill,
+      .snake-xp {
+        display: none;
+      }
+    }
+
+    .board-wrap {
+      position: relative;
+      width: var(--board-size);
+      aspect-ratio: 1;
+      justify-self: center;
+      align-self: center;
+      border: 8px solid var(--leaf-dark);
+      border-radius: 18px;
+      background: var(--cream);
+      box-shadow:
+        inset 0 0 0 4px #55b929,
+        var(--shadow);
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: var(--cream);
+    }
+
+    .message {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(255, 251, 232, 0.74);
+      text-align: center;
+    }
+
+    .message[hidden] {
+      display: none;
+    }
+
+    .message-card {
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 4px solid #78c43e;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .message-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: clamp(24px, 5vw, 36px);
+      color: #16812d;
+    }
+
+    .message-card p {
+      margin: 0 0 16px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .quick-help {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: min(520px, 76vw);
+      justify-self: center;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(111, 186, 46, 0.35);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      line-height: 1.1;
+      font-weight: 900;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .history {
+      background: rgba(255, 255, 255, 0.78);
+      border: 3px solid rgba(111, 186, 46, 0.35);
+      border-radius: 14px;
+      padding: 5px 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .history-popover {
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 80px;
+      z-index: 4;
+      width: min(320px, 92vw);
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .history-popover[hidden] {
+      display: none;
+    }
+
+    .history h2 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: #0c4a1d;
+      text-align: center;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .history-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 14px;
+      background: rgba(223, 255, 122, 0.42);
+      padding: 4px 7px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #176c25;
+    }
+
+    .history-empty {
+      margin: 0;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #2d7428;
+    }
+
+    .controls {
+      display: none;
+      grid-template-columns: repeat(3, 30px);
+      grid-template-rows: repeat(2, 30px);
+      gap: 3px;
+    }
+
+    .control {
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(#69cf36, #2c9f1f);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: inset 0 -4px 0 rgba(0, 84, 0, 0.25);
+      cursor: pointer;
+    }
+
+    .control[data-dir="up"] {
+      grid-column: 2;
+    }
+
+    .control[data-dir="left"] {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .control[data-dir="down"] {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .control[data-dir="right"] {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+        padding: 12px;
+      }
+
+      .game {
+        position: static;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stats {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stat.status-stat {
+        min-width: 120px;
+        text-align: center;
+      }
+
+      .restart {
+        flex: 1 1 120px;
+      }
+
+      .play-layout {
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 8px;
+      }
+
+      .snake-column {
+        grid-template-rows: none;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        order: 1;
+      }
+
+      .board-wrap {
+        order: 2;
+      }
+
+      .board-wrap {
+        width: min(94vmin, 520px);
+        border-width: 9px;
+        border-radius: 22px;
+      }
+
+      .snake-column-right {
+        order: 3;
+      }
+
+      .quick-help {
+        position: static;
+        transform: none;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        pointer-events: auto;
+        font-size: 12px;
+      }
+
+      .controls {
+        display: grid;
+      }
+
+      .history-popover {
+        right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game" aria-label="贪吃蛇吃苹果游戏">
+    <section class="topbar">
+      <h1>SNAKE</h1>
+      <div class="stats" aria-live="polite">
+        <div class="stat">
+          <span class="label">分数</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">最高分</span>
+          <span class="value" id="best">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">局数</span>
+          <span class="value" id="roundCount">0</span>
+        </div>
+        <div class="stat status-stat">
+          <span class="label">当前</span>
+          <span class="value" id="currentSnakeHud">稳稳蛇</span>
+        </div>
+        <div class="stat status-stat">
+          <span class="label">等级 / 经验</span>
+          <span class="value" id="currentLevelHud">1级</span>
+          <span class="label" id="currentXpHud">0/100经验</span>
+        </div>
+      </div>
+      <button class="record-toggle" type="button" id="recordToggle" aria-expanded="false" aria-controls="historyPanel">记录</button>
+      <button class="restart" type="button" id="restart">重新开始</button>
+      <section class="history history-popover" id="historyPanel" aria-label="每局分数记录" hidden>
+        <h2>每局记录</h2>
+        <ul class="history-list" id="historyList"></ul>
+        <p class="history-empty" id="historyEmpty">还没有记录。</p>
+      </section>
+    </section>
+
+    <section class="play-layout" aria-label="游戏和小蛇选择">
+      <div class="snake-column snake-column-left" aria-label="左侧小蛇选择">
+        <button class="snake-option" type="button" data-snake="sprout" aria-pressed="true">
+          <span class="snake-avatar sprout" aria-hidden="true">😊</span>
+          <span>
+            <span class="snake-name">稳稳蛇</span>
+            <span class="snake-level" data-level-for="sprout">1级</span>
+            <span class="snake-xp" data-xp-for="sprout">0/100经验</span>
+            <span class="snake-skill">速度很慢，最容易控制。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="apple" aria-pressed="false">
+          <span class="snake-avatar apple" aria-hidden="true">🍎</span>
+          <span>
+            <span class="snake-name">苹果蛇</span>
+            <span class="snake-level" data-level-for="apple">1级</span>
+            <span class="snake-xp" data-xp-for="apple">0/100经验</span>
+            <span class="snake-skill">吃苹果得分更多。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="spark" aria-pressed="false">
+          <span class="snake-avatar spark" aria-hidden="true">⚡</span>
+          <span>
+            <span class="snake-name">闪闪蛇</span>
+            <span class="snake-level" data-level-for="spark">1级</span>
+            <span class="snake-xp" data-xp-for="spark">0/100经验</span>
+            <span class="snake-skill">跑得快，适合挑战。</span>
+          </span>
+        </button>
+      </div>
+
+      <section class="board-wrap">
+        <canvas id="board" width="1200" height="1200" aria-label="贪吃蛇游戏区域"></canvas>
+        <div class="message" id="message">
+          <div class="message-card">
+            <strong id="messageTitle">先选一条小蛇</strong>
+            <p id="messageText">现在选中：稳稳蛇。按开始后去吃苹果吧！</p>
+            <button class="restart" type="button" id="start">开始游戏</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="snake-column snake-column-right" aria-label="右侧小蛇选择">
+        <button class="snake-option" type="button" data-snake="berry" aria-pressed="false">
+          <span class="snake-avatar berry" aria-hidden="true">🫐</span>
+          <span>
+            <span class="snake-name">蓝莓蛇</span>
+            <span class="snake-level" data-level-for="berry">1级</span>
+            <span class="snake-xp" data-xp-for="berry">0/100经验</span>
+            <span class="snake-skill">速度中等，分数也稳定。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="coin" aria-pressed="false">
+          <span class="snake-avatar coin" aria-hidden="true">⭐</span>
+          <span>
+            <span class="snake-name">星星蛇</span>
+            <span class="snake-level" data-level-for="coin">1级</span>
+            <span class="snake-xp" data-xp-for="coin">0/100经验</span>
+            <span class="snake-skill">得分最高，但要小心。</span>
+          </span>
+        </button>
+        <button class="snake-option" type="button" data-snake="rainbow" aria-pressed="false">
+          <span class="snake-avatar rainbow" aria-hidden="true">🌈</span>
+          <span>
+            <span class="snake-name">彩虹蛇</span>
+            <span class="snake-level" data-level-for="rainbow">1级</span>
+            <span class="snake-xp" data-xp-for="rainbow">0/100经验</span>
+            <span class="snake-skill">速度轻快，身体会变色。</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="quick-help" aria-label="游戏提示">
+        <span>红苹果+10 | 金苹果+30 | 蓝苹果减速 | 紫苹果变短</span>
+        <div class="controls" aria-label="方向按钮">
+          <button class="control" type="button" data-dir="up" aria-label="向上">↑</button>
+          <button class="control" type="button" data-dir="left" aria-label="向左">←</button>
+          <button class="control" type="button" data-dir="down" aria-label="向下">↓</button>
+          <button class="control" type="button" data-dir="right" aria-label="向右">→</button>
+        </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.querySelector("#board");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.querySelector("#score");
+    const bestEl = document.querySelector("#best");
+    const roundCountEl = document.querySelector("#roundCount");
+    const currentSnakeHud = document.querySelector("#currentSnakeHud");
+    const currentLevelHud = document.querySelector("#currentLevelHud");
+    const currentXpHud = document.querySelector("#currentXpHud");
+    const recordToggle = document.querySelector("#recordToggle");
+    const historyPanel = document.querySelector("#historyPanel");
+    const historyList = document.querySelector("#historyList");
+    const historyEmpty = document.querySelector("#historyEmpty");
+    const message = document.querySelector("#message");
+    const messageTitle = document.querySelector("#messageTitle");
+    const messageText = document.querySelector("#messageText");
+    const startButton = document.querySelector("#start");
+    const restartButton = document.querySelector("#restart");
+    const controls = document.querySelectorAll(".control");
+    const snakeTypeButtons = document.querySelectorAll(".snake-option");
+
+    const cells = 40;
+    const cellSize = canvas.width / cells;
+    const appleCount = 12;
+    const levelThresholds = [0, 100, 250, 500, 900];
+    const appleTypes = [
+      { id: "normal", name: "红苹果", points: 10, chance: 0.7, fill: "#e92f2f", stroke: "#9b1118", sparkle: "#fff" },
+      { id: "gold", name: "金苹果", points: 30, chance: 0.12, fill: "#ffd447", stroke: "#a76300", sparkle: "#fff6a6" },
+      { id: "slow", name: "蓝苹果", points: 10, chance: 0.1, fill: "#45b8ff", stroke: "#1452b8", sparkle: "#d9f5ff", effect: "slow" },
+      { id: "shrink", name: "紫苹果", points: 6, chance: 0.08, fill: "#9b5cff", stroke: "#5a2ca0", sparkle: "#f1e6ff", effect: "shrink" }
+    ];
+    const snakeTypes = [
+      {
+        id: "sprout",
+        name: "稳稳蛇",
+        tickMs: 380,
+        scoreMultiplier: 1,
+        head: "#4fd329",
+        body: "#67d92a",
+        stroke: "#19731e",
+        sparkle: "#dfff7a",
+        note: "速度很慢，最容易控制。"
+      },
+      {
+        id: "apple",
+        name: "苹果蛇",
+        tickMs: 330,
+        scoreMultiplier: 1.5,
+        head: "#ff8f5a",
+        body: "#ffbd54",
+        stroke: "#b74f24",
+        sparkle: "#fff1a8",
+        note: "吃苹果得分更多。"
+      },
+      {
+        id: "spark",
+        name: "闪闪蛇",
+        tickMs: 260,
+        scoreMultiplier: 1.2,
+        head: "#49cfff",
+        body: "#357aff",
+        stroke: "#1452b8",
+        sparkle: "#fff36a",
+        note: "跑得快，适合挑战。"
+      },
+      {
+        id: "berry",
+        name: "蓝莓蛇",
+        tickMs: 320,
+        scoreMultiplier: 1.1,
+        head: "#62c6ff",
+        body: "#4b88ff",
+        stroke: "#1d4ca8",
+        sparkle: "#d9f5ff",
+        note: "速度中等，分数也稳定。"
+      },
+      {
+        id: "coin",
+        name: "星星蛇",
+        tickMs: 300,
+        scoreMultiplier: 1.8,
+        head: "#ffd447",
+        body: "#f0a713",
+        stroke: "#a76300",
+        sparkle: "#fff6a6",
+        note: "得分最高，但要小心。"
+      },
+      {
+        id: "rainbow",
+        name: "彩虹蛇",
+        tickMs: 285,
+        scoreMultiplier: 1.3,
+        head: "#ff5f6d",
+        body: "#45b8ff",
+        stroke: "#7540b8",
+        sparkle: "#fff",
+        note: "速度轻快，身体会变色。"
+      }
+    ];
+
+    let snake;
+    let apples;
+    let direction;
+    let nextDirection;
+    let score;
+    let selectedSnake = snakeTypes[0];
+    let best = Number(localStorage.getItem("snake-best-score") || 0);
+    let roundHistory = JSON.parse(localStorage.getItem("snake-round-history") || "[]");
+    let snakeProgress = JSON.parse(localStorage.getItem("snake-progress") || "{}");
+    let gameTimer = null;
+    let speedEffectTimer = null;
+    let currentTickMs = selectedSnake.tickMs;
+    let running = false;
+    let paused = false;
+
+    bestEl.textContent = best;
+    renderSnakeCards();
+    renderHistory();
+
+    function newGame() {
+      snake = [
+        { x: 20, y: 20 },
+        { x: 19, y: 20 },
+        { x: 18, y: 20 }
+      ];
+      apples = [];
+      direction = { x: 1, y: 0 };
+      nextDirection = { x: 1, y: 0 };
+      score = 0;
+      currentTickMs = selectedSnake.tickMs;
+      clearTimeout(speedEffectTimer);
+      scoreEl.textContent = score;
+      placeApples();
+      running = true;
+      paused = false;
+      message.hidden = true;
+      startGameTimer();
+      draw();
+    }
+
+    function startGameTimer() {
+      clearInterval(gameTimer);
+      gameTimer = setInterval(step, currentTickMs);
+    }
+
+    function placeApples() {
+      while (apples.length < appleCount) {
+        const spot = {
+          x: Math.floor(Math.random() * cells),
+          y: Math.floor(Math.random() * cells),
+          type: chooseAppleType().id
+        };
+        const blockedBySnake = snake.some(part => part.x === spot.x && part.y === spot.y);
+        const blockedByApple = apples.some(apple => apple.x === spot.x && apple.y === spot.y);
+        if (!blockedBySnake && !blockedByApple) {
+          apples.push(spot);
+        }
+      }
+    }
+
+    function chooseAppleType() {
+      const roll = Math.random();
+      let total = 0;
+      for (const type of appleTypes) {
+        total += type.chance;
+        if (roll <= total) {
+          return type;
+        }
+      }
+      return appleTypes[0];
+    }
+
+    function getAppleType(id) {
+      return appleTypes.find(type => type.id === id) || appleTypes[0];
+    }
+
+    function step() {
+      if (paused) {
+        return;
+      }
+      direction = nextDirection;
+      const head = snake[0];
+      const newHead = {
+        x: head.x + direction.x,
+        y: head.y + direction.y
+      };
+
+      const hitWall = newHead.x < 0 || newHead.y < 0 || newHead.x >= cells || newHead.y >= cells;
+      const hitSelf = snake.some(part => part.x === newHead.x && part.y === newHead.y);
+
+      if (hitWall || hitSelf) {
+        endGame();
+        return;
+      }
+
+      snake.unshift(newHead);
+      const appleIndex = apples.findIndex(apple => apple.x === newHead.x && apple.y === newHead.y);
+
+      if (appleIndex >= 0) {
+        const eatenApple = apples.splice(appleIndex, 1)[0];
+        const appleType = getAppleType(eatenApple.type);
+        score += Math.round(appleType.points * getEffectiveScoreMultiplier(selectedSnake));
+        scoreEl.textContent = score;
+        if (score > best) {
+          best = score;
+          bestEl.textContent = best;
+          localStorage.setItem("snake-best-score", String(best));
+        }
+        applyAppleEffect(appleType);
+        placeApples();
+      } else {
+        snake.pop();
+      }
+
+      draw();
+    }
+
+    function endGame() {
+      running = false;
+      paused = false;
+      clearInterval(gameTimer);
+      clearTimeout(speedEffectTimer);
+      draw();
+      recordRound();
+      const progress = addSnakeExperience(score);
+      messageTitle.textContent = "游戏结束";
+      messageText.textContent = `${selectedSnake.name} 得了 ${score} 分，获得 ${progress.xpGained} 经验，现在是 ${progress.newLevel} 级。`;
+      startButton.textContent = "再玩一次";
+      message.hidden = false;
+    }
+
+    function recordRound() {
+      const round = {
+        snake: selectedSnake.name,
+        score,
+        time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
+      };
+      roundHistory = [round, ...roundHistory].slice(0, 8);
+      localStorage.setItem("snake-round-history", JSON.stringify(roundHistory));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      roundCountEl.textContent = roundHistory.length;
+      historyList.innerHTML = "";
+      historyEmpty.hidden = roundHistory.length > 0;
+
+      roundHistory.forEach((round, index) => {
+        const item = document.createElement("li");
+        const left = document.createElement("span");
+        const right = document.createElement("span");
+        left.textContent = `第${roundHistory.length - index}局 ${round.snake}`;
+        right.textContent = `${round.score}分 ${round.time}`;
+        item.append(left, right);
+      historyList.append(item);
+      });
+    }
+
+    function setHistoryOpen(open) {
+      historyPanel.hidden = !open;
+      recordToggle.setAttribute("aria-expanded", String(open));
+    }
+
+    function togglePause() {
+      if (!running) {
+        return;
+      }
+
+      if (paused) {
+        paused = false;
+        gameTimer = setInterval(step, currentTickMs);
+        message.hidden = true;
+        return;
+      }
+
+      paused = true;
+      clearInterval(gameTimer);
+      messageTitle.textContent = "暂停中";
+      messageText.textContent = "按空格键继续游戏。";
+      startButton.textContent = "继续游戏";
+      message.hidden = false;
+    }
+
+    function applyAppleEffect(appleType) {
+      if (appleType.effect === "slow") {
+        setTemporarySpeed(Math.round(selectedSnake.tickMs * 1.45), 5000);
+      } else if (appleType.effect === "shrink") {
+        shrinkSnake(2);
+      }
+    }
+
+    function setTemporarySpeed(tickMs, durationMs) {
+      currentTickMs = tickMs;
+      clearTimeout(speedEffectTimer);
+      if (running && !paused) {
+        startGameTimer();
+      }
+      speedEffectTimer = setTimeout(() => {
+        currentTickMs = selectedSnake.tickMs;
+        if (running && !paused) {
+          startGameTimer();
+        }
+      }, durationMs);
+    }
+
+    function shrinkSnake(amount) {
+      const minimumLength = 3;
+      for (let i = 0; i < amount && snake.length > minimumLength; i += 1) {
+        snake.pop();
+      }
+    }
+
+    function getSnakeLevel(xp) {
+      let level = 1;
+      levelThresholds.forEach((needed, index) => {
+        if (xp >= needed) {
+          level = index + 1;
+        }
+      });
+      return Math.min(level, levelThresholds.length);
+    }
+
+    function getSnakeProgress(id) {
+      const xp = Number(snakeProgress[id] || 0);
+      const level = getSnakeLevel(xp);
+      const nextLevelXp = levelThresholds[level] || levelThresholds[levelThresholds.length - 1];
+      return { xp, level, nextLevelXp };
+    }
+
+    function getEffectiveScoreMultiplier(type) {
+      const progress = getSnakeProgress(type.id);
+      return type.scoreMultiplier + (progress.level - 1) * 0.15;
+    }
+
+    function addSnakeExperience(points) {
+      const xpGained = Math.max(0, points);
+      const before = getSnakeProgress(selectedSnake.id);
+      snakeProgress[selectedSnake.id] = before.xp + xpGained;
+      localStorage.setItem("snake-progress", JSON.stringify(snakeProgress));
+      const after = getSnakeProgress(selectedSnake.id);
+      renderSnakeCards();
+      return {
+        xpGained,
+        oldLevel: before.level,
+        newLevel: after.level
+      };
+    }
+
+    function renderSnakeCards() {
+      snakeTypes.forEach(type => {
+        const progress = getSnakeProgress(type.id);
+        const levelEl = document.querySelector(`[data-level-for="${type.id}"]`);
+        const xpEl = document.querySelector(`[data-xp-for="${type.id}"]`);
+        if (levelEl) {
+          levelEl.textContent = `${progress.level}级`;
+        }
+        if (xpEl) {
+          const xpText = progress.level >= levelThresholds.length
+            ? `${progress.xp}经验 满级`
+            : `${progress.xp}/${progress.nextLevelXp}经验`;
+          xpEl.textContent = xpText;
+        }
+      });
+      renderCurrentSnakeHud();
+    }
+
+    function renderCurrentSnakeHud() {
+      const progress = getSnakeProgress(selectedSnake.id);
+      currentSnakeHud.textContent = selectedSnake.name;
+      currentLevelHud.textContent = `${progress.level}级`;
+      currentXpHud.textContent = progress.level >= levelThresholds.length
+        ? `${progress.xp}经验 满级`
+        : `${progress.xp}/${progress.nextLevelXp}经验`;
+    }
+
+    function chooseSnake(id) {
+      selectedSnake = snakeTypes.find(type => type.id === id) || snakeTypes[0];
+      snakeTypeButtons.forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.snake === selectedSnake.id));
+      });
+      if (!running) {
+        messageTitle.textContent = "先选一条小蛇";
+        messageText.textContent = `现在选中：${selectedSnake.name}。${selectedSnake.note}`;
+        startButton.textContent = "开始游戏";
+        draw();
+      }
+      renderCurrentSnakeHud();
+    }
+
+    function setDirection(name) {
+      const dirs = {
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 },
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 }
+      };
+      const wanted = dirs[name];
+      if (!wanted) return;
+      const currentDirection = direction || { x: 1, y: 0 };
+      const isReverse = wanted.x + currentDirection.x === 0 && wanted.y + currentDirection.y === 0;
+      if (!isReverse) {
+        nextDirection = wanted;
+      }
+    }
+
+    function draw() {
+      drawGrid();
+      apples.forEach(drawApple);
+      snake.forEach((part, index) => drawSnakePart(part, index === 0));
+    }
+
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fffbe8";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#9fcf64";
+      ctx.lineWidth = 3;
+
+      for (let i = 1; i < cells; i += 1) {
+        const pos = i * cellSize;
+        ctx.beginPath();
+        ctx.moveTo(pos, 0);
+        ctx.lineTo(pos, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, pos);
+        ctx.lineTo(canvas.width, pos);
+        ctx.stroke();
+      }
+    }
+
+    function drawSnakePart(part, isHead) {
+      const cx = part.x * cellSize + cellSize / 2;
+      const cy = part.y * cellSize + cellSize / 2;
+      const radius = cellSize * 0.38;
+
+      ctx.fillStyle = isHead ? selectedSnake.head : selectedSnake.body;
+      ctx.strokeStyle = selectedSnake.stroke;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.arc(cx - radius * 0.25, cy - radius * 0.32, radius * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (isHead) {
+        drawFace(cx, cy, radius);
+      } else if (selectedSnake.id === "apple") {
+        drawAppleSpot(cx, cy, radius);
+      } else if (selectedSnake.id === "spark" || selectedSnake.id === "coin") {
+        drawSparkStripe(cx, cy, radius);
+      } else if (selectedSnake.id === "berry") {
+        drawBerryDot(cx, cy, radius);
+      } else if (selectedSnake.id === "rainbow") {
+        drawRainbowRing(cx, cy, radius);
+      }
+    }
+
+    function drawAppleSpot(cx, cy, radius) {
+      ctx.fillStyle = "#e92f2f";
+      ctx.beginPath();
+      ctx.arc(cx + radius * 0.25, cy + radius * 0.16, radius * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawSparkStripe(cx, cy, radius) {
+      ctx.strokeStyle = selectedSnake.sparkle;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx - radius * 0.3, cy - radius * 0.4);
+      ctx.lineTo(cx + radius * 0.18, cy);
+      ctx.lineTo(cx - radius * 0.05, cy + radius * 0.4);
+      ctx.stroke();
+    }
+
+    function drawBerryDot(cx, cy, radius) {
+      ctx.fillStyle = "#d9f5ff";
+      ctx.beginPath();
+      ctx.arc(cx - radius * 0.18, cy + radius * 0.18, radius * 0.14, 0, Math.PI * 2);
+      ctx.arc(cx + radius * 0.24, cy - radius * 0.16, radius * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawRainbowRing(cx, cy, radius) {
+      ctx.strokeStyle = ["#ff5f6d", "#ffc371", "#58c915", "#45b8ff"][Math.floor((cx + cy) / cellSize) % 4];
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 0.72, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawFace(cx, cy, radius) {
+      const eyeY = cy - radius * 0.18;
+      const leftEyeX = cx - radius * 0.28;
+      const rightEyeX = cx + radius * 0.28;
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(leftEyeX, eyeY, radius * 0.17, 0, Math.PI * 2);
+      ctx.arc(rightEyeX, eyeY, radius * 0.17, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#16331a";
+      ctx.beginPath();
+      ctx.arc(leftEyeX, eyeY, radius * 0.08, 0, Math.PI * 2);
+      ctx.arc(rightEyeX, eyeY, radius * 0.08, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#164d22";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy + radius * 0.05, radius * 0.22, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+    }
+
+    function drawApple(apple) {
+      const cx = apple.x * cellSize + cellSize / 2;
+      const cy = apple.y * cellSize + cellSize / 2;
+      const radius = cellSize * 0.28;
+      const appleType = getAppleType(apple.type);
+
+      ctx.fillStyle = appleType.fill;
+      ctx.strokeStyle = appleType.stroke;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx - radius * 0.35, cy + radius * 0.08, radius, 0, Math.PI * 2);
+      ctx.arc(cx + radius * 0.35, cy + radius * 0.08, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = "#6c3611";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - radius * 0.62);
+      ctx.quadraticCurveTo(cx - 4, cy - radius * 1.08, cx + 10, cy - radius * 1.35);
+      ctx.stroke();
+
+      ctx.fillStyle = "#41ba27";
+      ctx.beginPath();
+      ctx.ellipse(cx + radius * 0.42, cy - radius * 1.05, radius * 0.48, radius * 0.22, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = appleType.sparkle;
+      ctx.beginPath();
+      ctx.arc(cx - radius * 0.48, cy - radius * 0.26, radius * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (appleType.effect === "slow") {
+        ctx.fillStyle = "#fff";
+        ctx.font = `${radius * 1.25}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("~", cx, cy + radius * 0.16);
+      } else if (appleType.effect === "shrink") {
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx - radius * 0.45, cy + radius * 0.1);
+        ctx.lineTo(cx + radius * 0.45, cy + radius * 0.1);
+        ctx.stroke();
+      } else if (appleType.id === "gold") {
+        ctx.fillStyle = "#fffbe8";
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    document.addEventListener("keydown", event => {
+      const keyMap = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right"
+      };
+      if (event.code === "Space") {
+        event.preventDefault();
+        togglePause();
+      } else if (keyMap[event.key]) {
+        event.preventDefault();
+        setDirection(keyMap[event.key]);
+        if (!running && message.hidden === false) {
+          newGame();
+        }
+      } else if (event.key === "Escape") {
+        setHistoryOpen(false);
+      }
+    });
+
+    controls.forEach(button => {
+      button.addEventListener("click", () => setDirection(button.dataset.dir));
+    });
+
+    snakeTypeButtons.forEach(button => {
+      button.addEventListener("click", () => chooseSnake(button.dataset.snake));
+    });
+
+    recordToggle.addEventListener("click", event => {
+      event.stopPropagation();
+      setHistoryOpen(historyPanel.hidden);
+    });
+
+    historyPanel.addEventListener("click", event => {
+      event.stopPropagation();
+    });
+
+    document.addEventListener("click", () => setHistoryOpen(false));
+
+    startButton.addEventListener("click", () => {
+      if (paused) {
+        togglePause();
+      } else {
+        newGame();
+      }
+    });
+    restartButton.addEventListener("click", newGame);
+
+    snake = [
+      { x: 20, y: 20 },
+      { x: 19, y: 20 },
+      { x: 18, y: 20 }
+    ];
+    apples = [
+      { x: 31, y: 5, type: "normal" },
+      { x: 34, y: 18, type: "gold" },
+      { x: 7, y: 32, type: "slow" },
+      { x: 24, y: 34, type: "shrink" },
+      { x: 5, y: 11, type: "normal" },
+      { x: 16, y: 6, type: "gold" },
+      { x: 12, y: 25, type: "normal" },
+      { x: 28, y: 26, type: "slow" },
+      { x: 36, y: 31, type: "normal" },
+      { x: 3, y: 36, type: "shrink" },
+      { x: 22, y: 10, type: "normal" },
+      { x: 9, y: 18, type: "gold" }
+    ];
+    draw();
+  </script>
+</body>
+</html>

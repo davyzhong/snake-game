@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>3D 果冻风 · 视觉样品</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #dfff7a 0%, #b9ef58 50%, #82d944 100%);
+      color: #164d22;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    h1 { text-align: center; color: #0c4a1d; margin: 0 0 6px; font-size: 26px; }
+    .sub { text-align: center; color: #2d7428; margin: 0 0 18px; font-size: 14px; font-weight: 700; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .card {
+      background: rgba(255,255,255,0.85);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(32,97,22,0.18);
+    }
+    .card h2 { margin: 0 0 8px; font-size: 15px; color: #0c4a1d; }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      background: #fffbe8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 3D 果冻立体风 · 视觉样品</h1>
+  <p class="sub">先看实物效果，满意后再全量推进到游戏。以下是各蛇种 + 各苹果的预览。</p>
+  <div class="grid">
+    <div class="card"><h2>稳稳蛇（带头部朝向 + 信子）</h2><canvas id="c1" width="800" height="180"></canvas></div>
+    <div class="card"><h2>苹果蛇（头顶叶子 + 身上苹果斑）</h2><canvas id="c2" width="800" height="180"></canvas></div>
+    <div class="card"><h2>闪闪蛇（电弧条纹 + 拖尾粒子）</h2><canvas id="c3" width="800" height="180"></canvas></div>
+    <div class="card"><h2>星星蛇（星光纹理 + 金色高光）</h2><canvas id="c4" width="800" height="180"></canvas></div>
+    <div class="card"><h2>蓝莓蛇（露珠质感高光）</h2><canvas id="c5" width="800" height="180"></canvas></div>
+    <div class="card"><h2>彩虹蛇（身体流动渐变色）</h2><canvas id="c6" width="800" height="180"></canvas></div>
+    <div class="card"><h2>四种苹果（红/金/蓝/紫 · 立体心形）</h2><canvas id="c7" width="800" height="200"></canvas></div>
+    <div class="card"><h2>草地背景 + 木栅栏边框（场景预览）</h2><canvas id="c8" width="600" height="600"></canvas></div>
+  </div>
+
+<script>
+/* =====================================================================
+   3D 果冻立体风 · 绘制工具函数（样品版，满意后整体迁移到主文件）
+   设计要点：
+   - 蛇身：渐变填充模拟立体感，顶部高光 + 底部阴影，头大尾细
+   - 头部：眼睛朝向移动方向，吐信子，可选装饰（叶子/电弧/星光）
+   - 身体节：相邻节用粗线连接成平滑身体，每节保留高光
+   - 苹果：心形轮廓 + 径向渐变 + 高光点 + 投影
+   ===================================================================== */
+
+const CELL = 40;  // 样品用的格子尺寸
+
+/* ---- 工具：圆角矩形 ---- */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ---- 画一节立体蛇身（果冻质感） ---- */
+function drawJellySegment(ctx, cx, cy, radius, baseColor, lightColor, darkColor) {
+  // 底部投影
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + radius * 0.85, radius * 0.9, radius * 0.25, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 主体径向渐变（从左上亮到右下暗）
+  const grad = ctx.createRadialGradient(
+    cx - radius * 0.35, cy - radius * 0.4, radius * 0.1,
+    cx, cy, radius
+  );
+  grad.addColorStop(0, lightColor);
+  grad.addColorStop(0.55, baseColor);
+  grad.addColorStop(1, darkColor);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 描边（深色轮廓）
+  ctx.strokeStyle = darkColor;
+  ctx.lineWidth = Math.max(2, radius * 0.08);
+  ctx.stroke();
+
+  // 顶部高光（月牙形）
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath();
+  ctx.ellipse(cx - radius * 0.25, cy - radius * 0.4, radius * 0.35, radius * 0.18, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 小亮点
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.beginPath();
+  ctx.arc(cx - radius * 0.35, cy - radius * 0.45, radius * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* ---- 画头部（带朝向眼睛 + 信子 + 可选装饰） ---- */
+function drawJellyHead(ctx, cx, cy, radius, type, dir) {
+  // dir = {x, y} 移动方向，决定眼睛偏移
+  const dx = dir.x, dy = dir.y;
+  const eyeOffsetX = dx * radius * 0.12;
+  const eyeOffsetY = dy * radius * 0.12;
+
+  // 眼白
+  const eyeY = cy - radius * 0.2 + eyeOffsetY;
+  const lex = cx - radius * 0.3 + eyeOffsetX;
+  const rex = cx + radius * 0.3 + eyeOffsetX;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(lex, eyeY, radius * 0.2, 0, Math.PI * 2);
+  ctx.arc(rex, eyeY, radius * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 瞳孔（朝向移动方向）
+  ctx.fillStyle = "#16331a";
+  ctx.beginPath();
+  ctx.arc(lex + dx * radius * 0.06, eyeY + dy * radius * 0.06, radius * 0.1, 0, Math.PI * 2);
+  ctx.arc(rex + dx * radius * 0.06, eyeY + dy * radius * 0.06, radius * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 瞳孔高光
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(lex + dx * radius * 0.06 - radius * 0.03, eyeY + dy * radius * 0.06 - radius * 0.03, radius * 0.03, 0, Math.PI * 2);
+  ctx.arc(rex + dx * radius * 0.06 - radius * 0.03, eyeY + dy * radius * 0.06 - radius * 0.03, radius * 0.03, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 嘴巴（微笑弧线）
+  ctx.strokeStyle = "rgba(22,51,26,0.5)";
+  ctx.lineWidth = Math.max(2, radius * 0.06);
+  ctx.beginPath();
+  ctx.arc(cx, cy + radius * 0.18, radius * 0.25, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+
+  // 信子（朝运动方向吐出）
+  const tongueBase = { x: cx + dx * radius * 0.7, y: cy + dy * radius * 0.7 };
+  const tongueTip = { x: cx + dx * radius * 1.1, y: cy + dy * radius * 1.1 };
+  ctx.strokeStyle = "#e92f6d";
+  ctx.lineWidth = Math.max(2, radius * 0.07);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(tongueBase.x, tongueBase.y);
+  ctx.lineTo(tongueTip.x, tongueTip.y);
+  // 信子分叉
+  const perp = { x: -dy, y: dx };
+  ctx.moveTo(tongueTip.x, tongueTip.y);
+  ctx.lineTo(tongueTip.x + perp.x * radius * 0.15 + dx * radius * 0.08, tongueTip.y + perp.y * radius * 0.15 + dy * radius * 0.08);
+  ctx.moveTo(tongueTip.x, tongueTip.y);
+  ctx.lineTo(tongueTip.x - perp.x * radius * 0.15 + dx * radius * 0.08, tongueTip.y - perp.y * radius * 0.15 + dy * radius * 0.08);
+  ctx.stroke();
+
+  // 蛇种专属装饰
+  drawHeadDecoration(ctx, cx, cy, radius, type);
+}
+
+/* ---- 头顶装饰（按蛇种） ---- */
+function drawHeadDecoration(ctx, cx, cy, radius, type) {
+  if (type.id === "apple") {
+    // 头顶小叶子
+    ctx.fillStyle = "#41ba27";
+    ctx.beginPath();
+    ctx.ellipse(cx + radius * 0.05, cy - radius * 0.95, radius * 0.2, radius * 0.35, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2d8a1c";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if (type.id === "spark") {
+    // 头顶闪电
+    ctx.fillStyle = "#fff36a";
+    ctx.strokeStyle = "#ffae00";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - radius * 0.1, cy - radius * 1.1);
+    ctx.lineTo(cx + radius * 0.15, cy - radius * 0.75);
+    ctx.lineTo(cx - radius * 0.05, cy - radius * 0.7);
+    ctx.lineTo(cx + radius * 0.1, cy - radius * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (type.id === "coin") {
+    // 头顶星星
+    drawStar(ctx, cx, cy - radius * 0.95, radius * 0.22, "#fff6a6", "#ffae00");
+  }
+}
+
+function drawStar(ctx, cx, cy, r, fill, stroke) {
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = (i * 2 * Math.PI / 5) - Math.PI / 2;
+    const a2 = a + Math.PI / 5;
+    if (i === 0) ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    else ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    ctx.lineTo(cx + Math.cos(a2) * r * 0.45, cy + Math.sin(a2) * r * 0.45);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+/* ---- 身体节装饰（按蛇种） ---- */
+function drawBodyDecoration(ctx, cx, cy, radius, type, index) {
+  if (type.id === "apple") {
+    // 苹果斑
+    ctx.fillStyle = "rgba(233,47,47,0.55)";
+    ctx.beginPath();
+    ctx.arc(cx + radius * 0.2, cy + radius * 0.1, radius * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (type.id === "spark") {
+    // 电弧条纹
+    ctx.strokeStyle = "rgba(255,243,106,0.85)";
+    ctx.lineWidth = Math.max(2, radius * 0.1);
+    ctx.beginPath();
+    ctx.moveTo(cx - radius * 0.3, cy - radius * 0.35);
+    ctx.lineTo(cx + radius * 0.1, cy);
+    ctx.lineTo(cx - radius * 0.15, cy + radius * 0.35);
+    ctx.stroke();
+  } else if (type.id === "coin") {
+    // 星光点
+    ctx.fillStyle = "rgba(255,246,166,0.9)";
+    ctx.beginPath();
+    ctx.arc(cx + radius * 0.15, cy - radius * 0.1, radius * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (type.id === "berry") {
+    // 露珠高光（额外的蓝色高光）
+    ctx.fillStyle = "rgba(217,245,255,0.7)";
+    ctx.beginPath();
+    ctx.arc(cx - radius * 0.15, cy + radius * 0.2, radius * 0.12, 0, Math.PI * 2);
+    ctx.arc(cx + radius * 0.2, cy - radius * 0.15, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (type.id === "rainbow") {
+    // 流动彩虹环
+    const colors = ["#ff5f6d", "#ffc371", "#58c915", "#45b8ff", "#8b5cff"];
+    ctx.strokeStyle = colors[index % colors.length];
+    ctx.lineWidth = Math.max(2, radius * 0.12);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+/* ---- 画一整条蛇（带头朝右） ---- */
+function drawSnake(ctx, startX, startY, type, dir) {
+  const bodyRadius = CELL * 0.38;
+  const headRadius = CELL * 0.42;
+  const segments = 6;
+
+  // 先画身体节之间的连接（平滑粗线）
+  ctx.strokeStyle = type.body;
+  ctx.lineCap = "round";
+  ctx.lineWidth = bodyRadius * 1.7;
+  ctx.beginPath();
+  for (let i = 0; i < segments; i++) {
+    const x = startX - i * CELL;
+    const y = startY;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 身体描边线（深色轮廓）
+  ctx.strokeStyle = type.stroke;
+  ctx.lineWidth = bodyRadius * 1.7 + 6;
+  // 用先画大圈再填色的方式简化：实际迁移时用更精细的描边
+  // 这里样品先用单层
+
+  // 画每节身体（从头到尾，尾巴渐细）
+  for (let i = segments - 1; i >= 1; i--) {
+    const x = startX - i * CELL;
+    const y = startY;
+    const r = bodyRadius * (1 - i * 0.08); // 尾巴渐细
+    drawJellySegment(ctx, x, y, r, type.body, type.head, type.stroke);
+    drawBodyDecoration(ctx, x, y, r, type, i);
+  }
+
+  // 头部（最大、带朝向）
+  drawJellySegment(ctx, startX, startY, headRadius, type.body, type.head, type.stroke);
+  drawJellyHead(ctx, startX, startY, headRadius, type, dir);
+}
+
+/* ---- 画立体苹果（心形 + 渐变 + 高光 + 投影） ---- */
+function drawJellyApple(ctx, cx, cy, radius, appleType) {
+  // 投影
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + radius * 0.9, radius * 0.85, radius * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 苹果主体（两个略扁的圆叠加成心形轮廓）
+  const grad = ctx.createRadialGradient(
+    cx - radius * 0.3, cy - radius * 0.3, radius * 0.1,
+    cx, cy + radius * 0.2, radius * 1.1
+  );
+  grad.addColorStop(0, appleType.light);
+  grad.addColorStop(0.5, appleType.fill);
+  grad.addColorStop(1, appleType.stroke);
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx - radius * 0.32, cy + radius * 0.05, radius * 0.78, 0, Math.PI * 2);
+  ctx.arc(cx + radius * 0.32, cy + radius * 0.05, radius * 0.78, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = appleType.stroke;
+  ctx.lineWidth = Math.max(2, radius * 0.08);
+  ctx.stroke();
+
+  // 顶部心形凹陷（小三角阴影）
+  ctx.fillStyle = "rgba(0,0,0,0.15)";
+  ctx.beginPath();
+  ctx.moveTo(cx - radius * 0.18, cy - radius * 0.55);
+  ctx.quadraticCurveTo(cx, cy - radius * 0.3, cx + radius * 0.18, cy - radius * 0.55);
+  ctx.quadraticCurveTo(cx, cy - radius * 0.42, cx - radius * 0.18, cy - radius * 0.55);
+  ctx.fill();
+
+  // 苹果柄
+  ctx.strokeStyle = "#6c3611";
+  ctx.lineWidth = Math.max(3, radius * 0.14);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - radius * 0.55);
+  ctx.quadraticCurveTo(cx - radius * 0.1, cy - radius * 0.95, cx + radius * 0.25, cy - radius * 1.15);
+  ctx.stroke();
+
+  // 叶子
+  ctx.fillStyle = "#41ba27";
+  ctx.beginPath();
+  ctx.ellipse(cx + radius * 0.45, cy - radius * 0.95, radius * 0.35, radius * 0.16, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#2d8a1c";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // 叶脉
+  ctx.strokeStyle = "#2d8a1c";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx + radius * 0.2, cy - radius * 0.85);
+  ctx.lineTo(cx + radius * 0.7, cy - radius * 1.05);
+  ctx.stroke();
+
+  // 主高光（大）
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.beginPath();
+  ctx.ellipse(cx - radius * 0.35, cy - radius * 0.2, radius * 0.25, radius * 0.35, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 小亮点
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.beginPath();
+  ctx.arc(cx - radius * 0.4, cy - radius * 0.3, radius * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 特效标识
+  if (appleType.effect === "slow") {
+    ctx.fillStyle = "#fff";
+    ctx.font = `bold ${radius * 0.7}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("❄", cx, cy + radius * 0.15);
+  } else if (appleType.effect === "shrink") {
+    ctx.fillStyle = "#fff";
+    ctx.font = `bold ${radius * 0.6}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("▽", cx, cy + radius * 0.15);
+  } else if (appleType.id === "gold") {
+    // 金苹果加发光环
+    ctx.strokeStyle = "rgba(255,212,71,0.6)";
+    ctx.lineWidth = radius * 0.12;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 1.15, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+/* ---- 蛇种配置（含 light 色用于渐变） ---- */
+const snakeTypes = [
+  { id: "sprout", name: "稳稳蛇", head: "#9eff7a", body: "#67d92a", stroke: "#19731e", light: "#c8ff9a" },
+  { id: "apple", name: "苹果蛇", head: "#ffbd80", body: "#ffbd54", stroke: "#b74f24", light: "#ffe1b0" },
+  { id: "spark", name: "闪闪蛇", head: "#7fdfff", body: "#357aff", stroke: "#1452b8", light: "#b8edff" },
+  { id: "berry", name: "蓝莓蛇", head: "#8fd6ff", body: "#4b88ff", stroke: "#1d4ca8", light: "#c8e8ff" },
+  { id: "coin", name: "星星蛇", head: "#ffe680", body: "#f0a713", stroke: "#a76300", light: "#fff3b0" },
+  { id: "rainbow", name: "彩虹蛇", head: "#ff8fa0", body: "#45b8ff", stroke: "#7540b8", light: "#ffc4cc" }
+];
+
+const appleTypes = [
+  { id: "normal", name: "红苹果", fill: "#e92f2f", stroke: "#9b1118", light: "#ff6b6b" },
+  { id: "gold", name: "金苹果", fill: "#ffd447", stroke: "#a76300", light: "#fff099" },
+  { id: "slow", name: "蓝苹果", fill: "#45b8ff", stroke: "#1452b8", light: "#8fd6ff", effect: "slow" },
+  { id: "shrink", name: "紫苹果", fill: "#9b5cff", stroke: "#5a2ca0", light: "#c8a0ff", effect: "shrink" }
+];
+
+/* ---- 渲染各样品画布 ---- */
+function setup(id) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext("2d");
+  return { c, ctx };
+}
+
+// 6 种蛇
+const snakeSamples = [
+  { canvas: "c1", type: snakeTypes[0] },
+  { canvas: "c2", type: snakeTypes[1] },
+  { canvas: "c3", type: snakeTypes[2] },
+  { canvas: "c4", type: snakeTypes[4] },
+  { canvas: "c5", type: snakeTypes[3] },
+  { canvas: "c6", type: snakeTypes[5] }
+];
+snakeSamples.forEach(s => {
+  const { c, ctx } = setup(s.canvas);
+  // 草地色背景
+  ctx.fillStyle = "#e8f5d0";
+  ctx.fillRect(0, 0, c.width, c.height);
+  // 浅网格
+  ctx.strokeStyle = "rgba(159,207,100,0.3)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < c.width; x += CELL) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, c.height); ctx.stroke();
+  }
+  for (let y = 0; y < c.height; y += CELL) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(c.width, y); ctx.stroke();
+  }
+  // 画蛇（头朝右）
+  drawSnake(ctx, c.width - 100, c.height / 2, s.type, { x: 1, y: 0 });
+});
+
+// 四种苹果
+{
+  const { c, ctx } = setup("c7");
+  ctx.fillStyle = "#e8f5d0";
+  ctx.fillRect(0, 0, c.width, c.height);
+  const r = 50;
+  appleTypes.forEach((a, i) => {
+    const cx = 110 + i * 190;
+    const cy = c.height / 2;
+    drawJellyApple(ctx, cx, cy, r, a);
+    // 名字
+    ctx.fillStyle = "#0c4a1d";
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(a.name, cx, cy + r + 35);
+  });
+}
+
+// 草地场景预览
+{
+  const { c, ctx } = setup("c8");
+  const size = c.width;
+  const cs = size / 15; // 15格
+
+  // 双色草地格
+  for (let y = 0; y < 15; y++) {
+    for (let x = 0; x < 15; x++) {
+      ctx.fillStyle = (x + y) % 2 === 0 ? "#cde88a" : "#b9ef58";
+      ctx.fillRect(x * cs, y * cs, cs, cs);
+    }
+  }
+  // 网格细线
+  ctx.strokeStyle = "rgba(120,170,60,0.25)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 15; i++) {
+    ctx.beginPath(); ctx.moveTo(i*cs, 0); ctx.lineTo(i*cs, size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*cs); ctx.lineTo(size, i*cs); ctx.stroke();
+  }
+  // 木栅栏边框
+  ctx.strokeStyle = "#8b5a2b";
+  ctx.lineWidth = 12;
+  ctx.strokeRect(6, 6, size - 12, size - 12);
+  ctx.strokeStyle = "#6c3611";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(6, 6, size - 12, size - 12);
+
+  // 几个苹果
+  const miniApple = (cx, cy, t) => drawJellyApple(ctx, cx, cy, cs * 0.32, t);
+  miniApple(cs * 3, cs * 3, appleTypes[0]);
+  miniApple(cs * 11, cs * 4, appleTypes[1]);
+  miniApple(cs * 5, cs * 11, appleTypes[2]);
+  miniApple(cs * 10, cs * 10, appleTypes[3]);
+
+  // 一条小蛇
+  const t = snakeTypes[0];
+  drawJellySegment(ctx, cs * 9, cs * 7, cs * 0.38, t.body, t.head, t.stroke);
+  drawJellySegment(ctx, cs * 8, cs * 7, cs * 0.35, t.body, t.head, t.stroke);
+  drawJellySegment(ctx, cs * 7, cs * 7, cs * 0.32, t.body, t.head, t.stroke);
+  drawJellySegment(ctx, cs * 6, cs * 7, cs * 0.42, t.body, t.head, t.stroke);
+  drawJellyHead(ctx, cs * 6, cs * 7, cs * 0.42, t, { x: -1, y: 0 });
+}
+</script>
+</body>
+</html>

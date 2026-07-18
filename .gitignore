@@ -1,0 +1,6 @@
+# Local browser profile and runtime artifacts
+work/chrome-snake-shot-profile/
+.superpowers/
+
+# Operating-system metadata
+.DS_Store
