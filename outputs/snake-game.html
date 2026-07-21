@@ -2241,27 +2241,11 @@
       cells: 26,
       appleCount: 12,
       assetPaths: {
-        arenaBackground: "assets/orchard-royal-bg-v3.png",
         rewardChests: "assets/reward-chests-transparent.png",
         powerupIcons: "assets/powerup-icons-transparent.png",
         powerupIconsV2: "assets/powerup-icons-v2.png",
-        snakePortraitsV2: "assets/snake-portraits-v2.png",
         snakePortraitsCrisp: "assets/snake-portraits-royal-v3-crisp.png",
-        snakeSidePortraitsV6: "assets/snake-side-portraits-v6-alpha.png",
-        snakeSidePortraitsV7Contained: "assets/snake-side-portraits-v7-contained.png",
-        orchardBoardDecorV1: "assets/orchard-board-decor-v1-alpha.png",
-        snakeMascotsDemoV4: "assets/snake-mascots-demo-v4-alpha.png",
-        snakeMascotsMenuV5: "assets/snake-mascots-menu-v5-alpha.png",
-        boardSnakeNecksV1: "assets/board-snake-necks-v1-alpha.png",
-        hudIconsDemoV4: "assets/hud-icons-demo-v4-alpha.png",
-        hudIconsDemoV5Contained: "assets/hud-icons-demo-v5-contained.png",
-        powerupShowcaseV4Contained: "assets/powerup-showcase-v4-contained.png",
-        rewardCandyContained: "assets/reward-candy-contained.png",
-        rewardGemContained: "assets/reward-gem-contained.png",
-        rewardGrapeContained: "assets/reward-grape-contained.png",
-        rewardAppleContained: "assets/reward-apple-contained.png",
-        rewardStarContained: "assets/reward-star-contained.png",
-        rewardUi: "assets/reward-ui-kit-transparent.png"
+        boardSnakeNecksV1: "assets/board-snake-necks-v1-alpha.png"
       },
       treatSprites: {
         normal: { col: 0, row: 3 },
@@ -2287,18 +2271,18 @@
         { level: 20, name: "满级传说", note: "达到最高 20 级，成为真正的蛇王。" }
       ],
       snakeTypes: [
-        { id: "sprout", name: "稳稳蛇", tickMs: 380, scoreMultiplier: 1, head: "#9eff7a", body: "#67d92a", stroke: "#19731e", light: "#c8ff9a", sparkle: "#dfff7a", note: "速度很慢，最容易控制。" },
-        { id: "apple", name: "苹果蛇", tickMs: 330, scoreMultiplier: 1.5, head: "#ffbd80", body: "#ffbd54", stroke: "#b74f24", light: "#ffe1b0", sparkle: "#fff1a8", note: "吃苹果得分更多。" },
-        { id: "spark", name: "闪闪蛇", tickMs: 260, scoreMultiplier: 1.2, head: "#7fdfff", body: "#357aff", stroke: "#1452b8", light: "#b8edff", sparkle: "#fff36a", note: "跑得快，适合挑战。" },
-        { id: "berry", name: "蓝莓蛇", tickMs: 320, scoreMultiplier: 1.1, head: "#8fd6ff", body: "#4b88ff", stroke: "#1d4ca8", light: "#c8e8ff", sparkle: "#d9f5ff", note: "速度中等，分数也稳定。" },
-        { id: "coin", name: "星星蛇", tickMs: 300, scoreMultiplier: 1.8, head: "#ffe680", body: "#f0a713", stroke: "#a76300", light: "#fff3b0", sparkle: "#fff6a6", note: "得分最高，但要小心。" },
-        { id: "rainbow", name: "彩虹蛇", tickMs: 285, scoreMultiplier: 1.3, head: "#ff8fa0", body: "#45b8ff", stroke: "#7540b8", light: "#ffc4cc", sparkle: "#fff", note: "速度轻快，身体会变色。" },
-        { id: "flower", name: "花花蛇", tickMs: 340, scoreMultiplier: 1.15, head: "#ffc4df", body: "#ff6fae", stroke: "#b82e68", light: "#ffe1ef", sparkle: "#fff6a6", note: "吃糖果奖励更多。" },
-        { id: "cloud", name: "云朵蛇", tickMs: 360, scoreMultiplier: 1.05, head: "#f5fbff", body: "#8fd6ff", stroke: "#3a7fb8", light: "#ffffff", sparkle: "#d9f5ff", note: "速度柔和，适合练习。" },
-        { id: "gem", name: "宝石蛇", tickMs: 275, scoreMultiplier: 1.55, head: "#e4c8ff", body: "#8b5cff", stroke: "#5a2ca0", light: "#f1e6ff", sparkle: "#fff6ff", note: "分数高，节奏偏快。" },
-        { id: "candy", name: "糖果蛇", tickMs: 315, scoreMultiplier: 1.25, head: "#fff099", body: "#ff8fce", stroke: "#b84a85", light: "#fffbe8", sparkle: "#fff6a6", note: "更容易积累糖豆。" },
-        { id: "ocean", name: "海浪蛇", tickMs: 305, scoreMultiplier: 1.2, head: "#7fffe2", body: "#138ce8", stroke: "#0b5798", light: "#b8fff0", sparkle: "#d9f5ff", note: "速度稳定，转向顺。" },
-        { id: "fire", name: "火焰蛇", tickMs: 245, scoreMultiplier: 1.6, head: "#ffe779", body: "#ff5f35", stroke: "#a83212", light: "#fff099", sparkle: "#fff6a6", note: "速度最快，分数刺激。" }
+        { id: "sprout", name: "稳稳蛇", tickMs: 380, scoreMultiplier: 1, head: "#9eff7a", body: "#67d92a", stroke: "#19731e", light: "#c8ff9a", sparkle: "#dfff7a", note: "每局首次失误自动救回。", talent: "稳稳救场：每局第一次撞墙或撞到自己会自动救回。" },
+        { id: "apple", name: "苹果蛇", tickMs: 330, scoreMultiplier: 1.5, head: "#ffbd80", body: "#ffbd54", stroke: "#b74f24", light: "#ffe1b0", sparkle: "#fff1a8", note: "吃苹果得分更高，金苹果会有机会再长一颗。", talent: "果园丰收：吃到金苹果有机会额外长出一颗金苹果。" },
+        { id: "spark", name: "闪闪蛇", tickMs: 260, scoreMultiplier: 1.2, head: "#7fdfff", body: "#357aff", stroke: "#1452b8", light: "#b8edff", sparkle: "#fff36a", note: "连吃越高，额外得分越多。", talent: "闪光连击：连吃达到 3 次后获得额外分数。" },
+        { id: "berry", name: "蓝莓蛇", tickMs: 320, scoreMultiplier: 1.1, head: "#8fd6ff", body: "#4b88ff", stroke: "#1d4ca8", light: "#c8e8ff", sparkle: "#d9f5ff", note: "吃蓝苹果后，慢动作持续更久。", talent: "蓝莓慢拍：蓝苹果带来的慢动作延长到 7.5 秒。" },
+        { id: "coin", name: "星星蛇", tickMs: 300, scoreMultiplier: 1.8, head: "#ffe680", body: "#f0a713", stroke: "#a76300", light: "#fff3b0", sparkle: "#fff6a6", note: "得分最高，吃金苹果额外获得糖豆。", talent: "星光赏金：每吃一个金苹果额外获得 15 糖豆。" },
+        { id: "rainbow", name: "彩虹蛇", tickMs: 285, scoreMultiplier: 1.3, head: "#ff8fa0", body: "#45b8ff", stroke: "#7540b8", light: "#ffc4cc", sparkle: "#fff", note: "吃蓝苹果或紫苹果额外得分。", talent: "彩虹好运：吃特殊苹果额外获得 15 分。" },
+        { id: "flower", name: "花花蛇", tickMs: 340, scoreMultiplier: 1.15, head: "#ffc4df", body: "#ff6fae", stroke: "#b82e68", light: "#ffe1ef", sparkle: "#fff6a6", note: "吃到糖果道具时额外获得 10 糖豆。", talent: "花蜜糖罐：糖果道具的糖豆奖励额外 +10。" },
+        { id: "cloud", name: "云朵蛇", tickMs: 360, scoreMultiplier: 1.05, head: "#f5fbff", body: "#8fd6ff", stroke: "#3a7fb8", light: "#ffffff", sparkle: "#d9f5ff", note: "所有慢动作效果持续更久。", talent: "云朵时光：蓝苹果与慢动作道具的持续时间提高。" },
+        { id: "gem", name: "宝石蛇", tickMs: 275, scoreMultiplier: 1.55, head: "#e4c8ff", body: "#8b5cff", stroke: "#5a2ca0", light: "#f1e6ff", sparkle: "#fff6ff", note: "打开藤蔓礼盒时额外获得糖豆。", talent: "宝箱鉴定：打开藤蔓礼盒额外获得 15 糖豆。" },
+        { id: "candy", name: "糖果蛇", tickMs: 315, scoreMultiplier: 1.25, head: "#fff099", body: "#ff8fce", stroke: "#b84a85", light: "#fffbe8", sparkle: "#fff6a6", note: "本局获得的全部糖豆增加 20%。", talent: "甜蜜存钱罐：本局所有糖豆奖励提升 20%。" },
+        { id: "ocean", name: "海浪蛇", tickMs: 305, scoreMultiplier: 1.2, head: "#7fffe2", body: "#138ce8", stroke: "#0b5798", light: "#b8fff0", sparkle: "#d9f5ff", note: "每局可从一侧边界穿到另一侧一次。", talent: "潮汐穿越：每局第一次撞墙会从对侧安全穿出。" },
+        { id: "fire", name: "火焰蛇", tickMs: 245, scoreMultiplier: 1.6, head: "#ffe779", body: "#ff5f35", stroke: "#a83212", light: "#fff099", sparkle: "#fff6a6", note: "吃金苹果后可穿过身体一次。", talent: "火焰穿行：吃到金苹果后可穿过身体一次。" }
       ],
       shopItems: [
         { id: "magnet", cost: 60, note: "20秒内自动吸来附近苹果。" },
@@ -2440,8 +2424,9 @@
         tickMs: 0,                         // 当前步长（受蓝苹果减速影响）
         accumulator: 0,                    // 固定步长累加器
         lastFrameAt: 0,                    // 上一帧时间戳
+        gameNow: 0,                        // 只在实际游戏中推进的时间，用于任务和限时道具
         speedEffectUntil: 0,               // 减速效果到期时间戳（0=无效果）
-        pauseStartedAt: 0                  // 暂停开始时间，用于冻结限时功能
+        pauseStartedAt: 0                  // 保留给暂停界面与调试信息
       },
       powerups: {
         magnetUntil: 0,
@@ -2459,7 +2444,7 @@
       boss: null,
       daily: { date: "", progress: {}, completed: {} },
       collection: {},
-      talent: { safeTurnCharges: 0, firePassCharges: 0 },
+      talent: { safeTurnCharges: 0, firePassCharges: 0, oceanWrapCharges: 0 },
       skill: { cooldownUntil: 0, activeUntil: 0 },  // 阶段2 用
       effects: []                          // 阶段1 粒子/飘字队列
     };
@@ -2541,6 +2526,8 @@
     const BOARD_POWERUP_BY_ID = Object.fromEntries(CONFIG.boardPowerupTypes.map(t => [t.id, t]));
     const SNAKE_TYPE_BY_ID = Object.fromEntries(CONFIG.snakeTypes.map(t => [t.id, t]));
     const gameImages = {};
+    const boardBackgroundCache = { canvas: null, themeId: "", width: 0, height: 0 };
+    const hudSnapshot = { metrics: "", snake: "" };
     const DIR_VECTORS = {
       up: { x: 0, y: -1 },
       down: { x: 0, y: 1 },
@@ -2585,7 +2572,7 @@
 
     /* ---- 玩家档案存档（多玩家隔离） ----
        存档结构（localStorage["snake-players"]）：
-       { version, activeId, players: { id: { id, name, avatar, best, roundHistory, progress, lastSnakeId, createdAt } } }
+       { version, activeId, players: { id: { id, name, avatar, best, roundHistory, progress, pendingChest, lastSnakeId, createdAt } } }
        state.best / roundHistory / progress 始终是"当前激活玩家"的运行时镜像，
        任何修改通过 savePlayers() 整体落盘。 */
     function loadPlayers() {
@@ -2624,6 +2611,7 @@
             daily: { date: "", progress: {}, completed: {} },
             collection: {},
             pendingShopItems: {},
+            pendingChest: null,
             lastSnakeId: "sprout",
             themeId: "orchard",
             createdAt: now
@@ -2645,6 +2633,7 @@
         daily: { date: "", progress: {}, completed: {} },
         collection: {},
         pendingShopItems: {},
+        pendingChest: null,
         lastSnakeId: "sprout",
         themeId: "orchard",
         createdAt: Date.now()
@@ -2673,8 +2662,9 @@
       state.daily = p.daily || { date: "", progress: {}, completed: {} };
       state.collection = p.collection || {};
       state.pendingShopItems = p.pendingShopItems || {};
+      state.pendingChest = p.pendingChest || null;
       state.selectedSnakeType = SNAKE_TYPE_BY_ID[p.lastSnakeId] || SNAKE_TYPE_BY_ID.sprout;
-      state.themeId = "orchard";
+      state.themeId = p.themeId || "orchard";
     }
 
     /* loadStorage：读或迁移玩家档案，并把激活玩家灌进 state */
@@ -2705,6 +2695,7 @@
         if (!player.tasks.completed) player.tasks.completed = {};
         if (!player.tasks.progress) player.tasks.progress = {};
         if (!player.pendingShopItems) player.pendingShopItems = {};
+        if (!Object.hasOwn(player, "pendingChest")) player.pendingChest = null;
         if (!player.daily) player.daily = { date: "", progress: {}, completed: {} };
         if (!player.daily.progress) player.daily.progress = {};
         if (!player.daily.completed) player.daily.completed = {};
@@ -2765,6 +2756,13 @@
       }
     }
 
+    function savePendingChest() {
+      if (state.activePlayerId && state.players[state.activePlayerId]) {
+        state.players[state.activePlayerId].pendingChest = state.pendingChest;
+        savePlayers();
+      }
+    }
+
     function saveLastSnake() {
       if (state.activePlayerId && state.players[state.activePlayerId]) {
         state.players[state.activePlayerId].lastSnakeId = state.selectedSnakeType.id;
@@ -2781,7 +2779,7 @@
     }
 
     function createPlayer(name, avatar) {
-      if (Object.keys(state.players).length >= CONFIG.players.maxCount) return null;
+      if (isRoundLocked() || Object.keys(state.players).length >= CONFIG.players.maxCount) return null;
       const id = nextPlayerId();
       const player = newDefaultPlayer(id, name, avatar);
       state.players[id] = player;
@@ -2790,7 +2788,7 @@
     }
 
     function switchPlayer(id) {
-      if (!state.players[id]) return;
+      if (!state.players[id] || isRoundLocked()) return false;
       // 先把当前运行时数据回写（保险，正常情况下各 save 已落盘）
       applyPlayerToState(id);
       savePlayers();
@@ -2814,10 +2812,11 @@
           `现在是 ${state.players[id].name} 的存档。选中：${state.selectedSnakeType.name}。`,
           "开始游戏");
       }
+      return true;
     }
 
     function deletePlayer(id) {
-      if (!state.players[id]) return;
+      if (isRoundLocked() || !state.players[id]) return;
       delete state.players[id];
       // 如果删的是当前玩家，切到剩余的第一个
       if (state.activePlayerId === id) {
@@ -2845,7 +2844,7 @@
     }
 
     function renamePlayer(id, name, avatar) {
-      if (!state.players[id]) return;
+      if (isRoundLocked() || !state.players[id]) return;
       const cleanName = name.trim().slice(0, 8) || state.players[id].name;
       state.players[id].name = cleanName;
       state.players[id].avatar = avatar;
@@ -2887,15 +2886,7 @@
     }
 
     function getSnakeTalent(snakeId) {
-      const talents = {
-        sprout: "稳稳救场：每局第一次失误会自动救回。",
-        apple: "果园丰收：吃到金苹果有机会额外长出一颗。",
-        spark: "闪光连击：连吃越高，额外得分越多。",
-        cloud: "云朵时光：所有慢动作效果持续更久。",
-        gem: "宝箱鉴定：打开藤蔓礼盒额外获得 15 糖豆。",
-        fire: "火焰穿行：吃到金苹果后可穿过身体一次。"
-      };
-      return talents[snakeId] || "成长天赋：升级后分数倍率和特效会提升。";
+      return SNAKE_TYPE_BY_ID[snakeId]?.talent || "成长天赋：升级后分数倍率和特效会提升。";
     }
 
     function getEffectiveScoreMultiplier(type) {
@@ -2906,10 +2897,7 @@
     function applyLevelStartBonus() {
       const perks = getSnakePerks(state.selectedSnakeType.id);
       if (perks.startCandyBonus <= 0) return 0;
-      state.coins += perks.startCandyBonus;
-      saveCoins();
-      renderShop();
-      return perks.startCandyBonus;
+      return addCandyPoints(perks.startCandyBonus);
     }
 
     function addSnakeExperience(points) {
@@ -2921,19 +2909,24 @@
       return { xpGained, oldLevel: before.level, newLevel: after.level };
     }
 
-    function addCandyPoints(points) {
-      state.coins += Math.max(0, points);
+    function addCandyPoints(points, options = {}) {
+      const multiplier = options.applySnakeBonus === false ? 1 : (state.selectedSnakeType?.id === "candy" ? 1.2 : 1);
+      const awarded = Math.round(Math.max(0, points) * multiplier);
+      state.coins += awarded;
       saveCoins();
       renderShop();
-      return state.coins;
+      return awarded;
     }
 
     function createRoundChestReward(score) {
       const rawCandy = CONFIG.chestRewards.baseCandy + Math.floor(Math.max(0, score) / CONFIG.chestRewards.scoreDivisor) * 5;
-      const candy = Math.min(CONFIG.chestRewards.maxCandy, Math.max(CONFIG.chestRewards.minCandy, rawCandy));
+      const baseCandy = Math.min(CONFIG.chestRewards.maxCandy, Math.max(CONFIG.chestRewards.minCandy, rawCandy));
+      const candy = state.selectedSnakeType?.id === "candy" ? Math.round(baseCandy * 1.2) : baseCandy;
       return {
         id: Date.now(),
         candy,
+        baseCandy,
+        snakeId: state.selectedSnakeType?.id || "sprout",
         score,
         claimed: false
       };
@@ -2943,8 +2936,9 @@
       if (!state.pendingChest || state.pendingChest.claimed) return false;
       const reward = state.pendingChest;
       reward.claimed = true;
-      addCandyPoints(reward.candy);
+      addCandyPoints(reward.candy, { applySnakeBonus: false });
       state.pendingChest = null;
+      savePendingChest();
       renderShop();
       syncHud();
       showMessage("宝箱打开了",
@@ -2954,7 +2948,7 @@
     }
 
     function resetRoundStats() {
-      state.roundStats = { applesEaten: 0, startedAt: performance.now(), seconds: 0, bestCombo: 0, powerups: 0 };
+      state.roundStats = { applesEaten: 0, startedAt: performance.now(), activeMs: 0, seconds: 0, bestCombo: 0, powerups: 0 };
     }
 
     function getTaskProgress(task) {
@@ -2969,8 +2963,7 @@
       if (!task || state.tasks.completed[taskId]) return false;
       state.tasks.completed[taskId] = Date.now();
       state.tasks.progress[taskId] = task.goal;
-      state.coins += task.reward;
-      saveCoins();
+      addCandyPoints(task.reward);
       saveTasks();
       state.effects.push({
         kind: "floatText",
@@ -2989,9 +2982,6 @@
     }
 
     function updateTaskProgress() {
-      if (state.phase === "playing" && state.roundStats.startedAt) {
-        state.roundStats.seconds = (performance.now() - state.roundStats.startedAt) / 1000;
-      }
       let changed = false;
       CONFIG.tasks.forEach(task => {
         const value = Math.min(task.goal, getTaskProgress(task));
@@ -3026,7 +3016,7 @@
         changed = true;
         if (next >= task.goal) {
           state.daily.completed[task.id] = Date.now();
-          state.coins += task.reward;
+          addCandyPoints(task.reward);
           state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.34, text: `每日任务+${task.reward}`, bornAt: performance.now(), life: 1300 });
         }
       });
@@ -3058,8 +3048,7 @@
       if (!mission || mission.completed) return;
       if (getRoundMetric(mission.metric) < mission.goal) return;
       mission.completed = true;
-      state.coins += mission.reward;
-      saveCoins();
+      addCandyPoints(mission.reward);
       state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.18, text: `挑战完成+${mission.reward}`, bornAt: performance.now(), life: 1400 });
       renderAdventurePanel();
       renderShop();
@@ -3067,6 +3056,26 @@
 
     function chooseRandom(items) {
       return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function getGameNow() {
+      return state.timing.gameNow;
+    }
+
+    function advanceGameClock(delta) {
+      if (state.phase !== "playing" || document.visibilityState === "hidden") return;
+      const activeDelta = Math.max(0, delta);
+      state.timing.gameNow += activeDelta;
+      state.roundStats.activeMs = Number(state.roundStats.activeMs || 0) + activeDelta;
+      state.roundStats.seconds = state.roundStats.activeMs / 1000;
+    }
+
+    function isRoundLocked() {
+      return state.phase === "playing" || state.phase === "paused";
+    }
+
+    function hasPendingChest() {
+      return Boolean(state.pendingChest && !state.pendingChest.claimed);
     }
 
     function prepareRoundAdventure() {
@@ -3084,6 +3093,7 @@
       state.combo = { count: 0, expireAt: 0 };
       state.talent.safeTurnCharges = state.selectedSnakeType.id === "sprout" ? 1 : 0;
       state.talent.firePassCharges = 0;
+      state.talent.oceanWrapCharges = state.selectedSnakeType.id === "ocean" ? 1 : 0;
       renderThemeSwitcher();
       renderAdventurePanel();
     }
@@ -3208,8 +3218,8 @@
     /* ---- 苹果效果 ---- */
     function applyAppleEffect(appleType, now) {
       if (appleType.effect === "slow") {
-        const duration = state.selectedSnakeType.id === "cloud" ? 7500 : 5000;
-        setTemporarySpeed(Math.round(state.selectedSnakeType.tickMs * 1.45), duration, now);
+        const duration = ["cloud", "berry"].includes(state.selectedSnakeType.id) ? 7500 : 5000;
+        setTemporarySpeed(Math.round(state.selectedSnakeType.tickMs * 1.45), duration, getGameNow());
       } else if (appleType.effect === "shrink") {
         shrinkSnake(2);
       }
@@ -3224,9 +3234,10 @@
       if (appleIndex < 0 || appleIndex >= state.apples.length) return false;
       const eatenApple = state.apples.splice(appleIndex, 1)[0];
       const appleType = APPLE_TYPE_BY_ID[eatenApple.type] || CONFIG.appleTypes[0];
+      const gameNow = getGameNow();
       const comboWindow = 2600;
-      state.combo.count = now <= state.combo.expireAt ? state.combo.count + 1 : 1;
-      state.combo.expireAt = now + comboWindow;
+      state.combo.count = gameNow <= state.combo.expireAt ? state.combo.count + 1 : 1;
+      state.combo.expireAt = gameNow + comboWindow;
       state.roundStats.bestCombo = Math.max(state.roundStats.bestCombo || 0, state.combo.count);
       const comboTier = state.combo.count >= 10 ? 3 : state.combo.count >= 6 ? 2 : state.combo.count >= 3 ? 1 : 0;
       const eventBonus = state.roundEvent?.comboBonus || 0;
@@ -3237,6 +3248,10 @@
       if (appleType.id === "gold") {
         if (state.selectedSnakeType.id === "fire") state.talent.firePassCharges = 1;
         if (state.selectedSnakeType.id === "apple" && Math.random() < 0.28) addAppleOfType("gold");
+        if (state.selectedSnakeType.id === "coin") addCandyPoints(15);
+      }
+      if (["slow", "shrink"].includes(appleType.id) && state.selectedSnakeType.id === "rainbow") {
+        awardSkillPoints({ bonusScore: 15 });
       }
       if (state.score > state.best) {
         state.best = state.score;
@@ -3276,8 +3291,9 @@
       updateRoundMission();
       let text = type.name;
       if (type.action === "candy") {
-        addCandyPoints(type.amount || 20);
-        text = `糖果+${type.amount || 20}糖豆`;
+        const bonus = state.selectedSnakeType.id === "flower" ? 10 : 0;
+        const awarded = addCandyPoints((type.amount || 20) + bonus);
+        text = `糖果+${awarded}糖豆`;
       } else if (type.action === "jelly") {
         shrinkSnake(2);
         text = "果冻变短";
@@ -3339,7 +3355,7 @@
     }
 
     function applyShopItem(itemId) {
-      const now = performance.now();
+      const now = getGameNow();
       if (itemId === "magnet") {
         state.powerups.magnetUntil = Math.max(state.powerups.magnetUntil, now) + CONFIG.shopDurations.magnet;
       } else if (itemId === "shield") {
@@ -3354,7 +3370,7 @@
 
     function applyMagnetPull() {
       const now = performance.now();
-      if (state.powerups.magnetUntil <= now || state.phase !== "playing") return;
+      if (state.powerups.magnetUntil <= getGameNow() || state.phase !== "playing") return;
       const head = state.snake.body[0];
       for (let index = state.apples.length - 1; index >= 0; index -= 1) {
         const apple = state.apples[index];
@@ -3405,7 +3421,7 @@
       return true;
     }
 
-    function setTemporarySpeed(tickMs, durationMs, now) {
+    function setTemporarySpeed(tickMs, durationMs, now = getGameNow()) {
       state.timing.tickMs = tickMs;
       state.timing.speedEffectUntil = now + durationMs;
     }
@@ -3425,12 +3441,11 @@
       if (!state.goldenRunner) return;
       state.goldenRunner = null;
       state.score += Math.round(90 * getEffectiveScoreMultiplier(state.selectedSnakeType));
-      state.coins += 15;
+      addCandyPoints(15);
       growSnakeFromTail();
       growSnakeFromTail();
       updateDailyProgress("goldens");
       unlockCollection("golden");
-      saveCoins();
       state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.42, text: "追到金苹果! +90", bornAt: now, life: 1200 });
       updateRoundMission();
     }
@@ -3442,8 +3457,7 @@
       const choices = [...CONFIG.chestChoices].sort(() => Math.random() - 0.5).slice(0, 3);
       state.chestChoices = choices;
       renderChestChoices();
-      setPhase("paused");
-      showMessage("藤蔓礼盒", "三张奖励卡里选一张，点一下就能马上继续游戏。", "开始游戏");
+      pauseRound("藤蔓礼盒", "三张奖励卡里选一张，点一下就能马上继续游戏。", "开始游戏");
       els.startButton.hidden = true;
       state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.46, text: "发现藤蔓礼盒!", bornAt: now, life: 1000 });
     }
@@ -3451,13 +3465,13 @@
     function chooseMysteryChestReward(id) {
       const choice = state.chestChoices?.find(item => item.id === id);
       if (!choice) return;
-      if (choice.id === "candy") addCandyPoints(choice.amount || 50);
-      else applyShopItem(choice.id);
-      if (state.selectedSnakeType.id === "gem") addCandyPoints(15);
       state.chestChoices = null;
       els.chestChoices.hidden = true;
       els.startButton.hidden = false;
-      setPhase("playing");
+      resumeRound();
+      if (choice.id === "candy") addCandyPoints(choice.amount || 50);
+      else applyShopItem(choice.id);
+      if (state.selectedSnakeType.id === "gem") addCandyPoints(15);
       state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.47, text: `${choice.name}到手!`, bornAt: performance.now(), life: 1100 });
     }
 
@@ -3466,11 +3480,10 @@
       state.boss.health -= 1;
       if (state.boss.health <= 0) {
         state.score += 160;
-        state.coins += 80;
+        addCandyPoints(80);
         state.boss = null;
         updateDailyProgress("bosses");
         unlockCollection("boss");
-        saveCoins();
         state.effects.push({ kind: "floatText", x: els.canvas.width / 2, y: els.canvas.height * 0.3, text: "首领击退! +160", bornAt: now, life: 1500 });
       } else {
         const cell = findFreeCell();
@@ -3508,6 +3521,20 @@
       const hitSelf = state.snake.body.some(part => part.x === newHead.x && part.y === newHead.y);
 
       if (hitWall || hitSelf) {
+        if (hitWall && state.selectedSnakeType.id === "ocean" && state.talent.oceanWrapCharges > 0) {
+          const wrappedHead = {
+            x: (newHead.x + CONFIG.cells) % CONFIG.cells,
+            y: (newHead.y + CONFIG.cells) % CONFIG.cells
+          };
+          const blocked = state.snake.body.some(part => part.x === wrappedHead.x && part.y === wrappedHead.y);
+          if (!blocked) {
+            state.talent.oceanWrapCharges -= 1;
+            state.snake.body.unshift(wrappedHead);
+            state.snake.body.pop();
+            state.effects.push({ kind: "floatText", x: wrappedHead.x * CELL_SIZE, y: wrappedHead.y * CELL_SIZE, text: "潮汐穿越!", bornAt: now, life: 1000 });
+            return;
+          }
+        }
         if (state.selectedSnakeType.id === "sprout" && state.talent.safeTurnCharges > 0) {
           state.talent.safeTurnCharges -= 1;
           useShieldSave();
@@ -3556,6 +3583,10 @@
 
     /* ---- 游戏阶段控制 ---- */
     function newGame() {
+      if (hasPendingChest()) {
+        showMessage("宝箱待领取", `先领取本局结束时获得的 ${state.pendingChest.candy} 糖豆。`, "领取宝箱");
+        return false;
+      }
       state.snake.body = [
         { x: 15, y: 15 },
         { x: 14, y: 15 },
@@ -3569,10 +3600,12 @@
       resetRoundStats();
       prepareRoundAdventure();
       state.timing.tickMs = getRoundTickMs();
+      state.timing.gameNow = 0;
       state.timing.speedEffectUntil = 0;
       state.timing.accumulator = 0;
       state.timing.pauseStartedAt = 0;
       state.powerups.magnetUntil = 0;
+      state.powerups.shieldCharges = 0;
       applyLevelStartBonus();
       placeApples();
       for (let i = 0; i < (state.roundEvent?.appleBonus || 0); i += 1) addAppleOfType("normal");
@@ -3584,6 +3617,7 @@
       setPhase("playing");
       applyPendingShopItems();
       renderPowerStatus();
+      return true;
     }
 
     function endGame() {
@@ -3592,6 +3626,7 @@
       const progress = addSnakeExperience(state.score);
       addCandyPoints(state.score);
       state.pendingChest = createRoundChestReward(state.score);
+      savePendingChest();
       renderHistory();
       renderSnakeCards();
       renderPowerStatus();
@@ -3610,27 +3645,35 @@
       saveHistory();
     }
 
-    function shiftTimedPowerups(ms) {
-      if (ms <= 0) return;
-      if (state.powerups.magnetUntil > 0) state.powerups.magnetUntil += ms;
-      if (state.timing.speedEffectUntil > 0) state.timing.speedEffectUntil += ms;
+    function pauseRound(title = "暂停中", text = "按空格键继续游戏。", buttonText = "继续游戏") {
+      if (state.phase !== "playing") return false;
+      state.timing.pauseStartedAt = performance.now();
+      setPhase("paused");
+      showMessage(title, text, buttonText);
+      return true;
+    }
+
+    function resumeRound() {
+      if (state.phase !== "paused" || state.chestChoices) return false;
+      state.timing.pauseStartedAt = 0;
+      setPhase("playing");
+      return true;
     }
 
     function togglePause() {
-      if (state.phase === "playing") {
-        state.timing.pauseStartedAt = performance.now();
-        setPhase("paused");
-        showMessage("暂停中", "按空格键继续游戏。", "继续游戏");
-      } else if (state.phase === "paused") {
-        shiftTimedPowerups(performance.now() - state.timing.pauseStartedAt);
-        state.timing.pauseStartedAt = 0;
-        setPhase("playing");
+      if (state.phase === "playing") return pauseRound();
+      if (state.phase === "paused" && !state.chestChoices) return resumeRound();
+      return false;
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden" && state.phase === "playing") {
+        pauseRound("已自动暂停", "切出页面时游戏已暂停，回来后按空格键继续。", "继续游戏");
       }
-      renderShop();
-      renderPowerStatus();
     }
 
     function chooseSnake(id) {
+      if (isRoundLocked()) return false;
       state.selectedSnakeType = SNAKE_TYPE_BY_ID[id] || SNAKE_TYPE_BY_ID.sprout;
       els.snakeOptionButtons.forEach(button => {
         button.setAttribute("aria-pressed", String(button.dataset.snake === state.selectedSnakeType.id));
@@ -3643,6 +3686,7 @@
           `现在选中：${state.selectedSnakeType.name}。${state.selectedSnakeType.note}`,
           "开始游戏");
       }
+      return true;
     }
 
     /* =========================================================================
@@ -3671,15 +3715,34 @@
     /* ---- 背景：双色草地格 + 木栅栏边框 ---- */
     function drawBackground() {
       const { ctx, canvas } = els;
-      const theme = currentTheme();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = theme.boardLight;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      drawAlignedOrchardGrid();
+      ctx.drawImage(getBoardBackgroundCache(), 0, 0);
     }
 
-    function drawAlignedOrchardGrid() {
-      const { ctx } = els;
+    function getBoardBackgroundCache() {
+      const { canvas } = els;
+      const needsRefresh = !boardBackgroundCache.canvas
+        || boardBackgroundCache.themeId !== state.themeId
+        || boardBackgroundCache.width !== canvas.width
+        || boardBackgroundCache.height !== canvas.height;
+      if (!needsRefresh) return boardBackgroundCache.canvas;
+
+      const cachedCanvas = document.createElement("canvas");
+      cachedCanvas.width = canvas.width;
+      cachedCanvas.height = canvas.height;
+      const cachedCtx = cachedCanvas.getContext("2d");
+      const theme = currentTheme();
+      cachedCtx.fillStyle = theme.boardLight;
+      cachedCtx.fillRect(0, 0, cachedCanvas.width, cachedCanvas.height);
+      drawAlignedOrchardGrid(cachedCtx, cachedCanvas);
+      boardBackgroundCache.canvas = cachedCanvas;
+      boardBackgroundCache.themeId = state.themeId;
+      boardBackgroundCache.width = canvas.width;
+      boardBackgroundCache.height = canvas.height;
+      return cachedCanvas;
+    }
+
+    function drawAlignedOrchardGrid(ctx, canvas) {
       const theme = currentTheme();
       ctx.save();
       for (let y = 0; y < CONFIG.cells; y += 1) {
@@ -3692,41 +3755,20 @@
           ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
         }
       }
-      drawSoftArenaTexture();
+      drawSoftArenaTexture(ctx, canvas);
       ctx.strokeStyle = state.themeId === "orchard" ? "rgba(37, 104, 43, 0.17)" : theme.grid;
       ctx.lineWidth = state.themeId === "orchard" ? 1.15 : 0.8;
       for (let i = 0; i <= CONFIG.cells; i += 1) {
         const pos = i * CELL_SIZE;
         ctx.beginPath();
-        ctx.moveTo(pos, 0); ctx.lineTo(pos, els.canvas.height); ctx.stroke();
+        ctx.moveTo(pos, 0); ctx.lineTo(pos, canvas.height); ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(0, pos); ctx.lineTo(els.canvas.width, pos); ctx.stroke();
+        ctx.moveTo(0, pos); ctx.lineTo(canvas.width, pos); ctx.stroke();
       }
       ctx.restore();
     }
 
-    function drawOrchardDecorations() {
-      // Reserved for a future non-interactive background layer. Board cells stay clear.
-    }
-
-    function drawArenaImageUnderlay(ctx, canvas) {
-      const img = gameImages.arenaBackground;
-      if (!isImageReady(img)) return;
-      const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
-      const width = img.naturalWidth * scale;
-      const height = img.naturalHeight * scale;
-      const x = (canvas.width - width) / 2;
-      const y = (canvas.height - height) / 2;
-      ctx.save();
-      ctx.globalAlpha = state.themeId === "orchard" ? 0.28 : 0.16;
-      ctx.drawImage(img, x, y, width, height);
-      ctx.fillStyle = "rgba(217, 244, 173, 0.48)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
-    }
-
-    function drawSoftArenaTexture() {
-      const { ctx, canvas } = els;
+    function drawSoftArenaTexture(ctx, canvas) {
       const theme = currentTheme();
       ctx.save();
       ctx.globalAlpha = state.themeId === "orchard" ? 0.32 : 0.18;
@@ -4663,12 +4705,21 @@
        UI 同步：把 state 投影到 DOM
        ========================================================================= */
     function syncHud() {
-      els.score.textContent = state.score;
-      els.best.textContent = state.best;
-      els.roundCount.textContent = state.roundHistory.length;
-      els.coinHud.textContent = state.coins;
-      renderCurrentSnakeHud();
-      renderPowerStatus();
+      const metrics = `${state.score}|${state.best}|${state.roundHistory.length}|${state.coins}`;
+      if (hudSnapshot.metrics !== metrics) {
+        hudSnapshot.metrics = metrics;
+        els.score.textContent = state.score;
+        els.best.textContent = state.best;
+        els.roundCount.textContent = state.roundHistory.length;
+        els.coinHud.textContent = state.coins;
+      }
+      const progress = getSnakeProgress(state.selectedSnakeType.id);
+      const snake = `${state.selectedSnakeType.id}|${progress.level}|${progress.xp}`;
+      if (hudSnapshot.snake !== snake) {
+        hudSnapshot.snake = snake;
+        renderCurrentSnakeHud();
+        renderPowerStatus();
+      }
     }
 
     function renderSnakeCards() {
@@ -4682,6 +4733,9 @@
             ? `${progress.xp}经验 满级`
             : `${progress.xp}/${progress.nextLevelXp}经验`;
         }
+      });
+      els.snakeOptionButtons.forEach(button => {
+        button.disabled = isRoundLocked();
       });
       renderCurrentSnakeHud();
       renderSnakeDetail();
@@ -4769,7 +4823,7 @@
     }
 
     function getShopStateText(item, canUseNow) {
-      const now = performance.now();
+      const now = getGameNow();
       const pending = Number(state.pendingShopItems[item.id] || 0);
       if (pending > 0) return `已备x${pending}`;
       if (!canUseNow) return "开局后用";
@@ -4948,6 +5002,7 @@
         btn.className = "player-avatar";
         btn.type = "button";
         btn.dataset.player = id;
+        btn.disabled = isRoundLocked();
         btn.setAttribute("aria-pressed", String(id === state.activePlayerId));
         btn.setAttribute("aria-label", id === state.activePlayerId
           ? `${p.name}（当前），点击编辑名字和头像`
@@ -5004,6 +5059,7 @@
     let modalSelectedAvatar = CONFIG.players.defaultAvatars[0];
 
     function openPlayerModal(editId) {
+      if (isRoundLocked()) return false;
       modalEditingId = editId || null;
       if (editId) {
         const p = state.players[editId];
@@ -5020,6 +5076,7 @@
       renderAvatarPicker();
       els.playerModal.hidden = false;
       els.playerNameInput.focus();
+      return true;
     }
 
     function closePlayerModal() {
@@ -5081,6 +5138,10 @@
         hideMessage();
       }
       renderShop();
+      renderSnakeCards();
+      renderPlayerSwitcher();
+      els.playerEdit.disabled = isRoundLocked();
+      els.playerAdd.disabled = isRoundLocked() || Object.keys(state.players).length >= CONFIG.players.maxCount;
       // 其他阶段的提示由调用方通过 showMessage 显式给出
     }
 
@@ -5097,7 +5158,8 @@
 
       if (state.phase === "playing") {
         // 减速效果到期检查
-        if (state.timing.speedEffectUntil > 0 && now >= state.timing.speedEffectUntil) {
+        advanceGameClock(delta);
+        if (state.timing.speedEffectUntil > 0 && getGameNow() >= state.timing.speedEffectUntil) {
           state.timing.tickMs = getRoundTickMs();
           state.timing.speedEffectUntil = 0;
         }
@@ -5130,7 +5192,7 @@
         event.preventDefault();
         if (state.phase === "playing" || state.phase === "paused") {
           togglePause();
-        } else if (state.phase === "gameover" && state.pendingChest) {
+        } else if (hasPendingChest()) {
           claimRoundChest();
         } else if (state.phase === "menu" || state.phase === "gameover") {
           newGame();
@@ -5147,6 +5209,8 @@
         setFeatureOpen(false);
       }
     });
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     els.controls.forEach(button => {
       button.addEventListener("click", () => setDirection(button.dataset.dir));
@@ -5179,7 +5243,7 @@
     els.startButton.addEventListener("click", () => {
       if (state.phase === "paused") {
         togglePause();
-      } else if (state.phase === "gameover" && state.pendingChest) {
+      } else if (hasPendingChest()) {
         claimRoundChest();
         return;
       } else {
@@ -5255,13 +5319,41 @@
       renderShop();
       syncHud();
       // 显示欢迎信息（当前玩家）
-      showMessage("先选一条小蛇",
-        `${state.players[state.activePlayerId].name}，选中：${state.selectedSnakeType.name}。${state.selectedSnakeType.note}`,
-        "开始游戏");
+      if (hasPendingChest()) {
+        showMessage("宝箱待领取",
+          `${state.players[state.activePlayerId].name}，上局宝箱里有 ${state.pendingChest.candy} 糖豆。`,
+          "领取宝箱");
+      } else {
+        showMessage("先选一条小蛇",
+          `${state.players[state.activePlayerId].name}，选中：${state.selectedSnakeType.name}。${state.selectedSnakeType.note}`,
+          "开始游戏");
+      }
       rafId = requestAnimationFrame(loop);
     }
 
     init();
+
+    // Only exposed when the automated rule harness explicitly enables it.
+    if (globalThis.__SNAKE_TEST__) {
+      globalThis.__snakeTestApi = {
+        CONFIG,
+        state,
+        newDefaultPlayer,
+        applyPlayerToState,
+        switchPlayer,
+        chooseSnake,
+        savePendingChest,
+        claimRoundChest,
+        resetRoundStats,
+        advanceGameClock,
+        getGameNow,
+        applyShopItem,
+        addCandyPoints,
+        step,
+        prepareRoundAdventure,
+        handleVisibilityChange
+      };
+    }
   </script>
 </body>
 </html>

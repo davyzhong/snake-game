@@ -7,25 +7,22 @@ const outputRoot = new URL("../../outputs/", import.meta.url);
 assert.match(html, /const CONFIG = \{/, "game should keep configuration in CONFIG");
 assert.match(html, /snakePortraitsCrisp: "assets\/snake-portraits-royal-v3-crisp\.png"/, "canvas should register the same portrait atlas used by the snake cards");
 assert.ok(existsSync(new URL("assets/snake-portraits-royal-v3-crisp.png", outputRoot)), "the card portrait atlas should be available to the canvas");
-assert.match(html, /snakeSidePortraitsV7Contained: "assets\/snake-side-portraits-v7-contained\.png"/, "side rails should register a proportion-preserving portrait atlas");
 assert.ok(existsSync(new URL("assets/snake-side-portraits-v7-contained.png", outputRoot)), "proportion-preserving side portrait atlas should be available");
-assert.match(html, /orchardBoardDecorV1: "assets\/orchard-board-decor-v1-alpha\.png"/, "game should register the original orchard board decoration atlas");
 assert.ok(existsSync(new URL("assets/orchard-board-decor-v1-alpha.png", outputRoot)), "original orchard board decoration atlas should be available");
 assert.match(html, /boardSnakeNecksV1: "assets\/board-snake-necks-v1-alpha\.png"/, "canvas should register headless character neck art");
 assert.ok(existsSync(new URL("assets/board-snake-necks-v1-alpha.png", outputRoot)), "headless character neck atlas should be available to the canvas");
 assert.match(html, /function cellRect\(cell\)/, "board visuals should share a cell rectangle helper");
-assert.match(html, /function drawAlignedOrchardGrid\(\)/, "orchard should draw its logical grid from game cells");
-assert.doesNotMatch(html, /drawAlignedOrchardGrid\(\);\s*drawOrchardDecorations\(\);/, "board should not place decorative art over interactive cells");
+assert.match(html, /function drawAlignedOrchardGrid\(ctx, canvas\)/, "orchard should draw its logical grid from game cells");
+assert.match(html, /function getBoardBackgroundCache\(\)/, "static board art should be cached instead of redrawn every frame");
+assert.match(html, /ctx\.drawImage\(getBoardBackgroundCache\(\), 0, 0\)/, "rendering should reuse the cached board background");
+assert.doesNotMatch(html, /drawOrchardDecorations|drawArenaImageUnderlay/, "board should not place decorative art over interactive cells");
 assert.equal((html.match(/class="board-corner/g) || []).length, 4, "board frame should use four anchored corner gems instead of floating board blockers");
 assert.match(html, /function drawCardPortraitHead\(/, "canvas should render the selected card portrait as its head");
 assert.match(html, /function drawCharacterNeck\(/, "canvas should attach a headless character neck behind the portrait");
 assert.match(html, /function drawCharacterSnakeSegments\(/, "body should use cell-snapped segments");
 assert.doesNotMatch(html, /drawCharacterSnakeFrontBody\(hcx, hcy/, "snake head should not stack an entire mascot thumbnail behind the portrait");
-assert.match(html, /snakeMascotsDemoV4: "assets\/snake-mascots-demo-v4-alpha\.png"/, "game should register the independent full-body mascot atlas");
 assert.ok(existsSync(new URL("assets/snake-mascots-demo-v4-alpha.png", outputRoot)), "the full-body mascot atlas should be available to the game");
-assert.match(html, /snakeMascotsMenuV5: "assets\/snake-mascots-menu-v5-alpha\.png"/, "menu should register the transparent premium mascot atlas");
 assert.ok(existsSync(new URL("assets/snake-mascots-menu-v5-alpha.png", outputRoot)), "the transparent premium mascot atlas should be available to the menu");
-assert.match(html, /hudIconsDemoV5Contained: "assets\/hud-icons-demo-v5-contained\.png"/, "game should register the proportion-preserving HUD icon strip");
 assert.match(html, /class="stat-art stat-art-trophy"/, "score HUD should include a trophy image slot");
 assert.match(html, /class="stat-art stat-art-crown"/, "best score HUD should include a crown image slot");
 assert.match(html, /class="stat-art stat-art-candy"/, "candy HUD should include a candy image slot");
@@ -46,7 +43,7 @@ assert.match(html, /appleCount: 12,/, "arena should keep many foods visible");
 assert.match(html, /snakeTypes: \[/, "game should define selectable snake types");
 assert.match(html, /appleTypes: \[/, "game should define multiple food/apple types");
 assert.match(html, /themes: \[/, "game should define selectable themes");
-assert.match(html, /assetPaths: \{[\s\S]*arenaBackground: "assets\/orchard-royal-bg-v3\.png"[\s\S]*rewardChests: "assets\/reward-chests-transparent\.png"[\s\S]*powerupIcons: "assets\/powerup-icons-transparent\.png"[\s\S]*rewardUi: "assets\/reward-ui-kit-transparent\.png"/, "game should register the premium orchard and treasure art assets");
+assert.match(html, /assetPaths: \{[\s\S]*rewardChests: "assets\/reward-chests-transparent\.png"[\s\S]*powerupIcons: "assets\/powerup-icons-transparent\.png"[\s\S]*boardSnakeNecksV1: "assets\/board-snake-necks-v1-alpha\.png"/, "game should preload only canvas assets needed during play");
 assert.match(html, /treatSprites: \{[\s\S]*normal: \{ col: 0, row: 3 \}[\s\S]*gold: \{ col: 2, row: 0 \}[\s\S]*slow: \{ col: 3, row: 0 \}[\s\S]*shrink: \{ col: 2, row: 1 \}/, "food should map to generated image sprites");
 for (const asset of [
   "assets/orchard-royal-bg-v3.png",
@@ -58,6 +55,8 @@ for (const asset of [
 }
 assert.match(html, /requestAnimationFrame\(loop\)/, "game should use animation-frame loop");
 assert.match(html, /phase: "menu"/, "game should use explicit phase state");
+assert.match(html, /document\.addEventListener\("visibilitychange", handleVisibilityChange\)/, "the game should pause safely when the page is hidden");
+assert.match(html, /function advanceGameClock\(delta\)[\s\S]*Math\.max\(0, delta\)/, "game time should use full active frame time");
 
 const allSnakeIds = ["sprout", "apple", "spark", "berry", "coin", "rainbow", "flower", "cloud", "gem", "candy", "ocean", "fire"];
 for (const snake of allSnakeIds) {
@@ -95,7 +94,10 @@ assert.match(html, /function renamePlayer\(id, name, avatar\)[\s\S]*state\.playe
 
 assert.match(html, /function togglePause/, "game should support toggling pause");
 assert.match(html, /event\.code === "Space"/, "space key should toggle pause/start");
-assert.match(html, /showMessage\("暂停中"/, "pause should show a pause message");
+assert.match(html, /function pauseRound\(title = "暂停中"/, "pause should use the shared paused-round helper");
+assert.match(html, /function getGameNow\(\)/, "timed effects should use game time instead of wall-clock time");
+assert.match(html, /function savePendingChest\(\)/, "unclaimed round chests should be persisted per player");
+assert.match(html, /isRoundLocked\(\)/, "players and snake choices should lock during an active round");
 
 assert.match(html, /function currentTheme/, "theme lookup should exist");
 assert.match(html, /function switchTheme/, "theme switching should exist");
@@ -132,7 +134,7 @@ assert.match(html, /chestRewards: \{[\s\S]*baseCandy: 20[\s\S]*scoreDivisor: 10/
 assert.match(html, /function createRoundChestReward\(score\)/, "game over should create a claimable chest reward");
 assert.match(html, /function claimRoundChest\(\)/, "player should be able to claim the game-over chest");
 assert.match(html, /state\.pendingChest = createRoundChestReward\(state\.score\);[\s\S]*showMessage\("游戏结束"[\s\S]*"领取宝箱"\);/, "game over should show a claim chest action instead of only replay");
-assert.match(html, /if \(state\.phase === "gameover" && state\.pendingChest\) \{[\s\S]*claimRoundChest\(\);[\s\S]*return;/, "start button should claim the chest before starting another game");
+assert.match(html, /else if \(hasPendingChest\(\)\) \{[\s\S]*claimRoundChest\(\);[\s\S]*return;/, "start button should claim any persisted chest before starting another game");
 assert.match(html, /宝箱奖励已准备好/, "reward preview should explain that the chest is available after each round");
 assert.doesNotMatch(html, /下一阶段加入/, "chest copy should not say the reward is delayed to a future stage");
 assert.match(html, /boardPowerupTypes: \[[\s\S]*id: "candy"[\s\S]*id: "magnet"[\s\S]*id: "jelly"[\s\S]*id: "shield"[\s\S]*id: "feast"[\s\S]*id: "slowTime"/, "board should define candy, magnet, jelly, shield, feast, and slow-time pickups");
@@ -220,7 +222,6 @@ assert.match(html, /\.stats\s*\{[\s\S]*gap: 6px;[\s\S]*padding: 4px 6px;/, "top 
 assert.match(html, /\.value\s*\{[\s\S]*font-size: 24px;/, "top status values should be large and easily readable");
 assert.match(html, /\.shop-art\s*\{[\s\S]*width: 52px;[\s\S]*height: 52px;/, "power-up art should be large enough to lead the shop cards");
 assert.match(html, /\.shop-name\s*\{[\s\S]*font-size: 14px;/, "power-up labels should be larger and clearer");
-assert.match(html, /snakePortraitsV2: "assets\/snake-portraits-v2\.png"/, "the game should load the dedicated twelve-snake portrait sheet");
 assert.match(html, /\.snake-avatar\s*\{[\s\S]*background-image: url\("assets\/snake-mascots-menu-v5-alpha\.png"\)[\s\S]*background-size: 400% 300%/, "snake cards should use the same complete mascot atlas as the central selection art");
 assert.ok(existsSync(new URL("assets/snake-portraits-royal-v3-alpha.png", outputRoot)), "the premium snake portrait sheet should be copied into outputs");
 assert.match(html, /\.snake-avatar\.sprout\s*\{[\s\S]*background-position: 0% 0%/, "the first snake portrait should map to the first atlas cell");
@@ -253,7 +254,7 @@ assert.match(html, /const \{ cx, cy \} = cellCenter\(apple\);[\s\S]*ctx\.arc\(cx
 assert.match(html, /visualScale: \{[\s\S]*snakeRadius: 0\.42,[\s\S]*headScale: 1\.04,[\s\S]*treatRadius: 0\.44,[\s\S]*sparkleScale: 0\.85/, "food should be visually larger while staying cell centered");
 assert.match(html, /--board-size: min\(calc\(100vh - 204px\), calc\(100vw - 236px\), 900px\);/, "desktop board should leave room for the richer board-bottom shop while staying prioritized");
 assert.match(html, /id: "orchard", name: "果园"[\s\S]*boardLight: "#d9f4ad", boardDark: "#d3efa6"[\s\S]*grid: "rgba\(112, 158, 70, 0\.055\)"/, "orchard board should use low-contrast comfortable colors");
-assert.match(html, /drawSoftArenaTexture\(\);/, "arena should draw a soft texture instead of a harsh checkerboard");
+assert.match(html, /drawSoftArenaTexture\(ctx, canvas\);/, "arena should draw a soft texture instead of a harsh checkerboard");
 assert.match(html, /roundMissions: \[[\s\S]*id: "combo6"[\s\S]*id: "power2"/, "game should define varied per-round missions");
 assert.match(html, /roundEvents: \[[\s\S]*id: "harvest"[\s\S]*id: "streakStorm"/, "game should define random orchard events");
 assert.match(html, /mapRotation: \[[\s\S]*themeId: "orchard"[\s\S]*themeId: "moonlit"[\s\S]*themeId: "snow"/, "game should rotate through orchard maps");
@@ -267,11 +268,11 @@ assert.match(html, /余额可买 \$\{getShopAffordableCount\(item\)\} 次/, "sho
 assert.match(html, /shop-note/, "shop cards should show a concise effect description");
 assert.match(html, /function spawnBoss\(\)/, "game should spawn a boss challenge target");
 assert.match(html, /function hitBoss\(now\)/, "game should resolve boss hits and rewards");
-assert.match(html, /稳稳救场[\s\S]*火焰穿行/, "six featured snake talents should be described in the game");
+assert.match(html, /稳稳救场[\s\S]*潮汐穿越[\s\S]*火焰穿行/, "all snake talents should be described in the game");
 assert.match(html, /id="dailyTaskList"/, "task panel should show daily tasks");
 assert.match(html, /id="collectionList"/, "task panel should show the collection book");
 assert.match(html, /function loadGameImages\(\)/, "generated image assets should be preloaded");
-assert.match(html, /function drawAlignedOrchardGrid\(\)[\s\S]*drawSoftArenaTexture\(\);/, "aligned orchard cells should keep a soft texture");
+assert.match(html, /function drawAlignedOrchardGrid\(ctx, canvas\)[\s\S]*drawSoftArenaTexture\(ctx, canvas\);/, "aligned orchard cells should keep a soft texture");
 assert.doesNotMatch(html, /function drawBackground\(\)\s*\{[\s\S]*?drawArenaImageUnderlay\(ctx, canvas\);/, "logical board should not render a competing image grid");
 assert.doesNotMatch(html, /radial-gradient\(circle at/, "desktop background should not use large round blob decorations");
 assert.match(html, /function cellCenter\(cell\)/, "rendering should share one grid-center helper");
