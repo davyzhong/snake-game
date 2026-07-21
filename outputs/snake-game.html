@@ -406,15 +406,15 @@
     .snake-avatar {
       width: 60px;
       height: 60px;
-      border-radius: 50%;
+      border-radius: 10px;
       display: grid;
       place-items: center;
       font-size: 0;
-      background-image: url("assets/snake-portraits-royal-v3-alpha.png");
+      background-image: url("assets/snake-mascots-menu-v5-alpha.png");
       background-size: 400% 300%;
       background-repeat: no-repeat;
-      background-color: #dff7bd;
-      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+      background-color: transparent;
+      box-shadow: none;
     }
 
     .snake-avatar.sprout {
@@ -1456,6 +1456,14 @@
         line-height: 1.05;
       }
 
+      #currentSnakeHud {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       .stats .stat-art { grid-row: 1 / span 2; }
       .stats .round-stat { display: none; }
 
@@ -1473,10 +1481,10 @@
       }
 
       .play-layout {
-        --board-size: min(calc(100vh - 218px), calc(100vw - 438px), 710px);
-        grid-template-columns: 238px minmax(0, 1fr) 238px;
+        --board-size: min(calc(100vh - 218px), calc(100vw - 522px), 710px);
+        grid-template-columns: 228px minmax(0, 1fr) 228px;
         width: 100%;
-        gap: 18px;
+        gap: 16px;
         align-items: center;
       }
 
@@ -1488,11 +1496,14 @@
 
       .snake-option {
         position: relative;
+        box-sizing: border-box;
+        width: 228px;
         min-height: 108px;
-        padding: 3px 10px 3px 42px;
+        aspect-ratio: auto;
+        padding: 4px;
         grid-template-columns: 1fr;
         justify-items: center;
-        gap: 8px;
+        gap: 0;
         border: 3px solid #f5c64e;
         border-radius: 18px;
         background: linear-gradient(135deg, rgba(19, 112, 91, 0.98), rgba(5, 65, 78, 0.98));
@@ -1503,21 +1514,22 @@
 
       .snake-option::before {
         position: absolute;
-        left: 7px;
-        top: 50%;
+        right: 5px;
+        left: auto;
+        top: 5px;
         z-index: 2;
-        width: 31px;
-        height: 38px;
-        transform: translateY(-50%);
-        border: 2px solid #fff0a7;
-        border-radius: 10px;
-        background: linear-gradient(180deg, #d79a26, #8e5310);
-        color: #fffdf1;
-        font-size: 17px;
+        width: 21px;
+        height: 24px;
+        transform: none;
+        border: 1px solid rgba(255, 239, 167, 0.78);
+        border-radius: 8px;
+        background: rgba(85, 62, 22, 0.72);
+        color: rgba(255, 250, 222, 0.94);
+        font-size: 13px;
         font-weight: 900;
-        line-height: 34px;
+        line-height: 22px;
         text-align: center;
-        box-shadow: inset 0 -3px 0 rgba(74, 34, 0, 0.24);
+        box-shadow: inset 0 -2px 0 rgba(20, 11, 0, 0.18);
       }
 
       .snake-option[aria-pressed="true"] {
@@ -1548,16 +1560,17 @@
 
       .snake-avatar {
         position: absolute;
-        top: 2px;
-        left: 42px;
-        width: 162px;
-        height: 108px;
+        top: 50%;
+        left: 6px;
+        width: 96px;
+        height: 96px;
+        transform: translateY(-50%);
         border: 0;
-        border-radius: 0;
+        border-radius: 10px;
         box-shadow: none;
         background-color: transparent;
         background-size: 400% 300%;
-        background-image: url("assets/snake-side-portraits-v7-contained.png");
+        background-image: url("assets/snake-mascots-menu-v5-alpha.png");
       }
 
       .snake-avatar.sprout,
@@ -1573,35 +1586,58 @@
       .snake-avatar.ocean,
       .snake-avatar.fire { background-color: transparent; }
 
-      /* Each rail portrait is an isolated image: no neighbouring sprite can leak into a card. */
-      .snake-avatar {
-        background-size: auto 100%;
-        background-position: center;
-        clip-path: inset(0 22px);
-      }
-
-      .snake-avatar.sprout { background-image: url("assets/snake-side-sprout-clean.png"); }
-      .snake-avatar.apple { background-image: url("assets/snake-side-apple-clean.png"); }
-      .snake-avatar.spark { background-image: url("assets/snake-side-spark-clean.png"); }
-      .snake-avatar.berry { background-image: url("assets/snake-side-berry-clean.png"); }
-      .snake-avatar.coin { background-image: url("assets/snake-side-coin-clean.png"); }
-      .snake-avatar.rainbow { background-image: url("assets/snake-side-rainbow-clean.png"); }
-      .snake-avatar.flower { background-image: url("assets/snake-side-flower-clean.png"); }
-      .snake-avatar.cloud { background-image: url("assets/snake-side-cloud-clean.png"); }
-      .snake-avatar.gem { background-image: url("assets/snake-side-gem-clean.png"); }
-      .snake-avatar.candy { background-image: url("assets/snake-side-candy-clean.png"); }
-      .snake-avatar.ocean { background-image: url("assets/snake-side-ocean-clean.png"); }
-      .snake-avatar.fire { background-image: url("assets/snake-side-fire-clean.png"); }
-
       .snake-column-right .snake-avatar {
-        right: 8px;
-        left: auto;
-        transform: scaleX(-1);
+        right: auto;
+        left: 6px;
+        transform: translateY(-50%);
       }
 
-      .snake-option > span:last-child { display: none; }
-      .snake-name { color: #fffdf0; font-size: 16px; line-height: 1.1; text-shadow: 0 2px 0 rgba(0, 37, 31, 0.38); }
-      .snake-level { margin-top: 5px; padding: 2px 7px; background: #fff1a7; color: #6a3e0c; font-size: 12px; }
+      .snake-option > span:last-child {
+        position: absolute;
+        inset: 10px 9px 9px 112px;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        align-content: start;
+        gap: 4px;
+        padding-right: 25px;
+        text-align: left;
+      }
+
+      .snake-name {
+        display: block;
+        overflow: hidden;
+        color: #fffdf0;
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1.1;
+        text-overflow: ellipsis;
+        text-shadow: 0 2px 0 rgba(0, 37, 31, 0.38);
+        white-space: nowrap;
+      }
+
+      .snake-level {
+        justify-self: start;
+        margin: 0;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 241, 167, 0.94);
+        color: #6a3e0c;
+        font-size: 12px;
+        line-height: 1.1;
+      }
+
+      .snake-option .snake-skill {
+        display: block;
+        max-height: 2.5em;
+        overflow: hidden;
+        color: rgba(255, 253, 240, 0.9);
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.25;
+        text-shadow: 0 1px 0 rgba(0, 37, 31, 0.35);
+      }
+
+      .snake-option .snake-xp { display: none; }
 
       .board-stack {
         grid-template-rows: var(--board-size) 108px;
@@ -2005,7 +2041,7 @@
     <section class="play-layout" aria-label="游戏和小蛇选择">
       <div class="snake-column snake-column-left" aria-label="左侧小蛇选择">
         <button class="snake-option" type="button" data-snake="sprout" aria-pressed="true">
-          <span class="snake-avatar sprout" aria-hidden="true">😊</span>
+          <span class="snake-avatar sprout" aria-hidden="true"></span>
           <span>
             <span class="snake-name">稳稳蛇</span>
             <span class="snake-level" data-level-for="sprout">1级</span>
@@ -2014,7 +2050,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="apple" aria-pressed="false">
-          <span class="snake-avatar apple" aria-hidden="true">🍎</span>
+          <span class="snake-avatar apple" aria-hidden="true"></span>
           <span>
             <span class="snake-name">苹果蛇</span>
             <span class="snake-level" data-level-for="apple">1级</span>
@@ -2023,7 +2059,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="spark" aria-pressed="false">
-          <span class="snake-avatar spark" aria-hidden="true">⚡</span>
+          <span class="snake-avatar spark" aria-hidden="true"></span>
           <span>
             <span class="snake-name">闪闪蛇</span>
             <span class="snake-level" data-level-for="spark">1级</span>
@@ -2032,7 +2068,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="berry" aria-pressed="false">
-          <span class="snake-avatar berry" aria-hidden="true">🫐</span>
+          <span class="snake-avatar berry" aria-hidden="true"></span>
           <span>
             <span class="snake-name">蓝莓蛇</span>
             <span class="snake-level" data-level-for="berry">1级</span>
@@ -2041,7 +2077,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="coin" aria-pressed="false">
-          <span class="snake-avatar coin" aria-hidden="true">⭐</span>
+          <span class="snake-avatar coin" aria-hidden="true"></span>
           <span>
             <span class="snake-name">星星蛇</span>
             <span class="snake-level" data-level-for="coin">1级</span>
@@ -2050,7 +2086,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="rainbow" aria-pressed="false">
-          <span class="snake-avatar rainbow" aria-hidden="true">🌈</span>
+          <span class="snake-avatar rainbow" aria-hidden="true"></span>
           <span>
             <span class="snake-name">彩虹蛇</span>
             <span class="snake-level" data-level-for="rainbow">1级</span>
@@ -2109,7 +2145,7 @@
 
       <div class="snake-column snake-column-right" aria-label="右侧小蛇选择">
         <button class="snake-option" type="button" data-snake="flower" aria-pressed="false">
-          <span class="snake-avatar flower" aria-hidden="true">🌸</span>
+          <span class="snake-avatar flower" aria-hidden="true"></span>
           <span>
             <span class="snake-name">花花蛇</span>
             <span class="snake-level" data-level-for="flower">1级</span>
@@ -2118,7 +2154,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="cloud" aria-pressed="false">
-          <span class="snake-avatar cloud" aria-hidden="true">☁️</span>
+          <span class="snake-avatar cloud" aria-hidden="true"></span>
           <span>
             <span class="snake-name">云朵蛇</span>
             <span class="snake-level" data-level-for="cloud">1级</span>
@@ -2127,7 +2163,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="gem" aria-pressed="false">
-          <span class="snake-avatar gem" aria-hidden="true">💎</span>
+          <span class="snake-avatar gem" aria-hidden="true"></span>
           <span>
             <span class="snake-name">宝石蛇</span>
             <span class="snake-level" data-level-for="gem">1级</span>
@@ -2136,7 +2172,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="candy" aria-pressed="false">
-          <span class="snake-avatar candy" aria-hidden="true">🍬</span>
+          <span class="snake-avatar candy" aria-hidden="true"></span>
           <span>
             <span class="snake-name">糖果蛇</span>
             <span class="snake-level" data-level-for="candy">1级</span>
@@ -2145,7 +2181,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="ocean" aria-pressed="false">
-          <span class="snake-avatar ocean" aria-hidden="true">🌊</span>
+          <span class="snake-avatar ocean" aria-hidden="true"></span>
           <span>
             <span class="snake-name">海浪蛇</span>
             <span class="snake-level" data-level-for="ocean">1级</span>
@@ -2154,7 +2190,7 @@
           </span>
         </button>
         <button class="snake-option" type="button" data-snake="fire" aria-pressed="false">
-          <span class="snake-avatar fire" aria-hidden="true">🔥</span>
+          <span class="snake-avatar fire" aria-hidden="true"></span>
           <span>
             <span class="snake-name">火焰蛇</span>
             <span class="snake-level" data-level-for="fire">1级</span>
@@ -4658,6 +4694,7 @@
       els.currentSnakeArt.style.backgroundSize = "400% 300%";
       els.currentSnakeArt.style.backgroundPosition = `${(snakeIndex % 4) * 33.333}% ${Math.floor(snakeIndex / 4) * 50}%`;
       els.currentSnakeHud.textContent = state.selectedSnakeType.name;
+      els.currentSnakeHud.title = state.selectedSnakeType.name;
       els.currentLevelHud.textContent = `${progress.level}级`;
       els.currentXpHud.textContent = progress.level >= CONFIG.levelThresholds.length
         ? `${progress.xp}经验 满级`
@@ -4867,20 +4904,9 @@
     }
 
     function renderPowerStatus() {
-      const now = performance.now();
-      const status = [];
-      if (state.powerups.magnetUntil > now) {
-        status.push(`磁铁${Math.ceil((state.powerups.magnetUntil - now) / 1000)}秒`);
-      }
-      if (state.timing.speedEffectUntil > now) {
-        status.push(`慢动作${Math.ceil((state.timing.speedEffectUntil - now) / 1000)}秒`);
-      }
-      if (state.powerups.shieldCharges > 0) {
-        status.push(`护盾x${state.powerups.shieldCharges}`);
-      }
-      if (status.length) {
-        els.currentSnakeHud.textContent = `${state.selectedSnakeType.name} · ${status.join(" ")}`;
-      }
+      // Top HUD remains a stable identity label; active power-up feedback appears on the board.
+      els.currentSnakeHud.textContent = state.selectedSnakeType.name;
+      els.currentSnakeHud.title = state.selectedSnakeType.name;
     }
 
     function setHistoryOpen(open) {

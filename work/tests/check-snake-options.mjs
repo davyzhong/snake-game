@@ -32,6 +32,8 @@ assert.match(html, /class="stat-art stat-art-candy"/, "candy HUD should include 
 assert.match(html, /class="stat-art stat-art-snake"/, "selected snake HUD should include a snake image slot");
 assert.match(html, /currentSnakeArt: document\.querySelector\("\.stat-art-snake"\)/, "HUD should cache the selected snake portrait slot");
 assert.match(html, /els\.currentSnakeArt\.style\.backgroundImage/, "HUD should update the portrait to the selected snake");
+assert.match(html, /#currentSnakeHud\s*\{[\s\S]*text-overflow: ellipsis;[\s\S]*white-space: nowrap;/, "current snake HUD text should stay inside its status card");
+assert.doesNotMatch(html, /currentSnakeHud\.textContent = `\$\{state\.selectedSnakeType\.name\} ·/, "temporary power-up text should not overflow the current-snake HUD");
 assert.match(html, /class="stat-art stat-art-star"/, "level HUD should include a star image slot");
 assert.match(html, /\.snake-detail-art\s*\{[\s\S]*snake-mascots-menu-v5-alpha\.png/, "menu detail should render the transparent premium mascot atlas");
 assert.match(html, /--ref-width:\s*1680px;/, "desktop UI should use the demo reference width token");
@@ -219,13 +221,19 @@ assert.match(html, /\.value\s*\{[\s\S]*font-size: 24px;/, "top status values sho
 assert.match(html, /\.shop-art\s*\{[\s\S]*width: 52px;[\s\S]*height: 52px;/, "power-up art should be large enough to lead the shop cards");
 assert.match(html, /\.shop-name\s*\{[\s\S]*font-size: 14px;/, "power-up labels should be larger and clearer");
 assert.match(html, /snakePortraitsV2: "assets\/snake-portraits-v2\.png"/, "the game should load the dedicated twelve-snake portrait sheet");
-assert.match(html, /\.snake-avatar\s*\{[\s\S]*background-image: url\("assets\/snake-portraits-royal-v3-alpha\.png"\)[\s\S]*background-size: 400% 300%/, "snake cards should use the premium twelve-snake portrait sheet");
+assert.match(html, /\.snake-avatar\s*\{[\s\S]*background-image: url\("assets\/snake-mascots-menu-v5-alpha\.png"\)[\s\S]*background-size: 400% 300%/, "snake cards should use the same complete mascot atlas as the central selection art");
 assert.ok(existsSync(new URL("assets/snake-portraits-royal-v3-alpha.png", outputRoot)), "the premium snake portrait sheet should be copied into outputs");
 assert.match(html, /\.snake-avatar\.sprout\s*\{[\s\S]*background-position: 0% 0%/, "the first snake portrait should map to the first atlas cell");
 assert.match(html, /\.snake-avatar\.fire\s*\{[\s\S]*background-position: 100% 100%/, "the fire snake portrait should map to the final atlas cell");
-assert.match(html, /\.snake-avatar\s*\{[\s\S]*position: absolute;[\s\S]*left: 42px;[\s\S]*width: 162px;[\s\S]*height: 108px;[\s\S]*background-size: 400% 300%;/, "snake card portraits should lead the card with a large proportion-preserving portrait");
-assert.doesNotMatch(html, /background-position-y: 0%;/, "wide snake card portraits should preserve their atlas row positions");
-assert.match(html, /background-image: url\("assets\/snake-side-portraits-v7-contained\.png"\)/, "desktop snake cards should use full-width transparent portraits instead of nested tiles");
+assert.match(html, /\.play-layout\s*\{[\s\S]*grid-template-columns: 228px minmax\(0, 1fr\) 228px/, "desktop layout should reserve room for each snake's description");
+assert.match(html, /\.snake-option\s*\{[\s\S]*width: 228px;[\s\S]*min-height: 108px;[\s\S]*aspect-ratio: auto;[\s\S]*padding: 4px;/, "each desktop snake option should be an information card around a square portrait");
+assert.match(html, /\.snake-option::before\s*\{[\s\S]*right: 5px;[\s\S]*left: auto;[\s\S]*width: 21px;[\s\S]*height: 24px;/, "snake number badges should sit quietly in the upper-right corner without covering the portrait");
+assert.match(html, /\.snake-avatar\s*\{[\s\S]*position: absolute;[\s\S]*left: 6px;[\s\S]*width: 96px;[\s\S]*height: 96px;[\s\S]*transform: translateY\(-50%\);[\s\S]*background-image: url\("assets\/snake-mascots-menu-v5-alpha\.png"\)/, "desktop snake cards should keep a complete square full-body mascot portrait beside its description");
+assert.match(html, /\.snake-option > span:last-child\s*\{[\s\S]*inset: 10px 9px 9px 112px;[\s\S]*display: grid;/, "snake cards should expose a dedicated description area beside the portrait");
+assert.match(html, /\.snake-option \.snake-skill\s*\{[\s\S]*display: block;/, "snake cards should show each snake's gameplay feature");
+assert.doesNotMatch(html, /snake-side-(?:sprout|apple|spark|berry|coin|rainbow|flower|cloud|gem|candy|ocean|fire)-clean\.png/, "side rails should not use cropped per-snake image files");
+assert.doesNotMatch(html, /clip-path: inset\(0 22px\)/, "side rail portraits should not crop the complete mascot art");
+assert.doesNotMatch(html, /scaleX\(-1\)/, "right-side snake portraits should preserve the same pose as the central art");
 
 assert.match(html, /function drawSnakeBody/, "snake renderer should exist");
 assert.match(html, /function drawCharacterSnakeSegments/, "new snake body should use aligned character segments");
