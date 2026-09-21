@@ -4,3 +4,14 @@ work/chrome-snake-shot-profile/
 
 # Operating-system metadata
 .DS_Store
+
+# Node.js / Playwright（截图脚本运行时依赖，本地 npm install 后产生）
+node_modules/
+package-lock.json
+npx-debug.log*
+.npm/
+
+# Playwright 浏览器缓存
+playwright-report/
+test-results/
+.playwright/

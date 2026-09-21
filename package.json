@@ -1,0 +1,39 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "description": "单文件 HTML5 贪吃蛇吃苹果 — 12 条带天赋小蛇 + 果园竞技场视觉 + RPG 元素",
+  "main": "outputs/snake-game.html",
+  "directories": {
+    "docs": "outputs/docs"
+  },
+  "scripts": {
+    "test": "echo 'No test suite yet — see work/tests/'",
+    "screenshot": "node scripts/screenshot.js",
+    "screenshot:install": "npx playwright install chromium"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davyzhong/snake-game.git"
+  },
+  "keywords": [
+    "snake",
+    "game",
+    "html5",
+    "canvas",
+    "vanilla-js",
+    "single-file"
+  ],
+  "author": "davyzhong",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/davyzhong/snake-game/issues"
+  },
+  "homepage": "https://github.com/davyzhong/snake-game#readme",
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

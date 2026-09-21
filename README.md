@@ -92,31 +92,42 @@ start outputs/snake-game.html
 
 ---
 
-## 📸 截图矩阵
+## 📸 截图矩阵（自动化生成 · 永不脱节）
 
-> ⚠️ **v0.5.0 截图更新进行中**：当前只有一张手动截取的"选蛇界面"。其余场景（游戏中 / 暂停 / 任务详情 / 升级系统 / 移动端）截图待补。**欢迎 PR 投稿最新截图** — 见下方"截图贡献指引"。
+> ✅ **v0.5.0 截图自动化**：所有截图由 `scripts/screenshot.js` (Playwright) 自动生成，CI 每天 0 点重跑 + push 触发。**禁止人工手动 update 截图**。
 
-| 场景 | 截图文件 | 状态 |
+<p align="center">
+  <a href="outputs/snake-game-snake-select-latest.png"><img src="outputs/snake-game-snake-select-latest.png" width="540" alt="v0.5.0 桌面端选蛇界面" /></a>
+  <a href="outputs/snake-game-mobile-select.png"><img src="outputs/snake-game-mobile-select.png" width="240" alt="v0.5.0 移动端响应式选蛇界面" /></a>
+</p>
+
+| 场景 | 截图文件 | 描述 |
 |---|---|---|
-| **选蛇界面（hero）** | `snake-game-snake-select-latest.png` | ✅ 已截（2026-09-21）|
-| 游戏中棋盘 + 12 蛇对局 | `_TODO_` | 📸 待补 |
-| 暂停界面（v0.5.0 切出自动暂停）| `_TODO_` | 📸 待补 |
-| 升级系统 + 任务详情 | `_TODO_` | 📸 待补 |
-| 特殊苹果系统（金/蓝/紫/红）| `_TODO_` | 📸 待补 |
-| 移动端响应式布局 | `_TODO_` | 📸 待补 |
+| **桌面端选蛇（hero）** | `snake-game-snake-select-latest.png` | 1280×800 桌面端，左右 6 条蛇卡 + 中央对话框 |
+| **移动端选蛇** | `snake-game-mobile-select.png` | 390×844 iPhone 视口，响应式布局 |
+| **游戏中** | `snake-game-playing.png` | 开局几秒后真实对局 |
+| **暂停界面** | `snake-game-paused.png` | 按空格暂停 |
+| **任务详情** | `snake-game-task-detail.png` | 点击任务按钮展开 |
+| **记录面板** | `snake-game-records.png` | 点击记录按钮展开 |
 
-### 📸 截图贡献指引
+### 📸 截图自动化使用
 
-如果你想贡献最新截图：
+```bash
+# 一次性安装
+npm install
+npx playwright install chromium
 
-1. **打开游戏**：`open outputs/snake-game.html`
-2. **截图操作**：
-   - macOS：`Cmd + Shift + 4` 选区截图，或 `Cmd + Shift + 5` 录屏后取帧
-   - 推荐分辨率：**1280×800**（桌面）或 **390×844**（移动模拟）
-3. **保存格式**：PNG，无压缩，文件名语义化（如 `snake-game-playing.png`）
-4. **放到 outputs/**：`outputs/snake-game-<场景名>.png`
-5. **更新 README**：把 `<场景名>` 加到上面的矩阵
-6. **提交 PR**：标题写 `docs(assets): 添加 <场景名> 截图`
+# 本地跑一次截图（覆盖所有）
+npm run screenshot
+
+# 或
+node scripts/screenshot.js
+```
+
+**触发自动化**：
+- 🤖 **GitHub Action**：`.github/workflows/screenshot.yml` 每天 0 点自动跑 + `snake-game.html` 变化时自动跑 + 手动触发
+- 💻 **本地**：开发时跑 `npm run screenshot` 重新生成截图
+- 📝 **新增截图场景**：编辑 `scripts/screenshot.js` 的 `SCREENSHOT_CONFIG` 数组，加一个配置项即可
 
 ---
 
@@ -170,7 +181,7 @@ snake-game/
 - [x] **v0.3** — 阶段 1 视觉重做
 - [x] **v0.4** — 天赋 + 任务系统
 - [x] **v0.5**（当前）— 12 条带天赋小蛇 + 20 级成长 + 玩家档案 + 宝箱持久化 + 果园竞技场视觉
-- [ ] **v0.5.1** — README 截图自动化（Playwright + CI）
+- [x] **v0.5.1** — README 截图自动化（Playwright + GitHub Action 集成）
 - [ ] **v0.6** — 多人在线对战（计划中）
 - [ ] **v1.0** — 完整 RPG 化（天赋树、技能、装备系统）
 
