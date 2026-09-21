@@ -81,21 +81,32 @@ start outputs/snake-game.html
 
 ---
 
-## 📸 截图矩阵
+## 📸 截图矩阵（v0.5.0 当前版本）
 
 <p align="center">
-  <a href="outputs/snake-game-12-snakes-powerups.png"><img src="outputs/snake-game-12-snakes-powerups.png" width="270" alt="12 条带天赋小蛇同时上场，局内道具" /></a>
-  <a href="outputs/snake-game-40x40.png"><img src="outputs/snake-game-40x40.png" width="270" alt="40×40 紧凑棋盘模式" /></a>
-  <a href="outputs/snake-game-arena-upgrade-desktop.png"><img src="outputs/snake-game-arena-upgrade-desktop.png" width="270" alt="果园竞技场桌面视图" /></a>
+  <a href="outputs/snake-game-upgrades.png"><img src="outputs/snake-game-upgrades.png" width="270" alt="v0.5.0 升级系统桌面视图：糖豆、任务、购买功能栏" /></a>
+  <a href="outputs/snake-game-upgrades-mobile.png"><img src="outputs/snake-game-upgrades-mobile.png" width="270" alt="v0.5.0 升级系统移动端响应式布局" /></a>
+  <a href="outputs/snake-game-special-apples.png"><img src="outputs/snake-game-special-apples.png" width="270" alt="v0.5.0 特殊苹果系统：红/金/蓝/紫苹果差异化" /></a>
 </p>
 
 <p align="center">
-  <a href="outputs/snake-game-hud-larger-board.png"><img src="outputs/snake-game-hud-larger-board.png" width="270" alt="HUD 大棋盘视图" /></a>
-  <a href="outputs/snake-game-history-more-snakes.png"><img src="outputs/snake-game-history-more-snakes.png" width="270" alt="历史记录多蛇视图" /></a>
-  <a href="outputs/snake-game-mobile-screenshot.png"><img src="outputs/snake-game-mobile-screenshot.png" width="270" alt="移动端响应式截图" /></a>
+  <a href="outputs/snake-game-treasure-assets.png"><img src="outputs/snake-game-treasure-assets.png" width="270" alt="v0.5.0 宝箱持久化系统与玩家档案" /></a>
+  <a href="outputs/snake-game-target-hints.png"><img src="outputs/snake-game-target-hints.png" width="270" alt="v0.5.0 任务系统提示与目标指引" /></a>
+  <a href="outputs/snake-game-pause-verified.png"><img src="outputs/snake-game-pause-verified.png" width="270" alt="v0.5.0 暂停机制：切出页面自动暂停，时限道具不被后台消耗" /></a>
 </p>
 
-> **更多截图**：见 [`outputs/`](./outputs/) 目录（20+ 张不同场景截图）
+> **完整截图库**：见 [`outputs/`](./outputs/) 目录（37+ 张不同场景截图，含全部 v0.5.0 功能）
+
+### 🔄 截图更新流程（v0.5.1 计划）
+
+README 引用的截图通过 [outputs/scripts/screenshot.js](./outputs/scripts/screenshot.js)（v0.5.1 计划中）自动生成：
+
+- **CLI 截图**：脚本启动本地 HTTP 服务器，加载 `snake-game.html`，用 Playwright 自动点击关键按钮、触发核心动画、截取桌面/移动两种视口
+- **GUI 截图**：脚本模拟用户操作触发 12 条小蛇/特殊苹果/任务系统，保存 PNG 到 `outputs/`
+- **触发方式**：`node outputs/scripts/screenshot.js` 或 GitHub Action 在 `push` 时自动跑
+- **CI 集成**：`.github/workflows/screenshot.yml` 每天定时跑，确保 README 永远是最新的
+
+> **历史教训**：v0.5.0 之前的 README 引用过 v0.1.0 的 `snake-game-40x40.png`，但 v0.5.0 已升级到 26×26 棋盘，导致图文不符。**v0.5.0 起所有截图必须由脚本自动产生，禁止人工 update**。
 
 ---
 
