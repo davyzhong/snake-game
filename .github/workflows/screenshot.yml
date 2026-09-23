@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: '20'
       - name: 📦 安装依赖
-        run: npm install
+        run: npm ci
 
       - name: 🎭 安装 Playwright 浏览器
         run: npx playwright install --with-deps chromium
@@ -86,7 +86,7 @@ jobs:
 
             如需手动更新：
             ```bash
-            npm install
+            npm ci
             npx playwright install chromium
             node scripts/screenshot.js
             git add outputs/*.png
