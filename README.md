@@ -5,17 +5,30 @@ license: MIT
 homepage: https://github.com/davyzhong/snake-game
 ---
 
+## 架构
+
+```mermaid
+flowchart LR
+    A[index.html 入口] --> B[游戏主循环<br/>Canvas 渲染]
+    B --> C[游戏状态<br/>蛇 · 食物 · 天赋]
+    B --> D[输入处理<br/>键盘 / 触屏]
+    C --> B
+    S[scripts/screenshot.js<br/>Playwright] -. 自动生成 .-> O[outputs/<br/>README 截图]
+```
+
 <div align="center">
 
 # 🐍 贪吃蛇吃苹果
 
+![CI workflow 状态](https://img.shields.io/github/actions/workflow/status/davyzhong/snake-game/screenshot.yml) ![GitHub Stars](https://img.shields.io/github/stars/davyzhong/snake-game)
+
 **单文件 HTML5 桌面游戏 · 12 条带天赋小蛇 · 果园竞技场视觉 · 双击即玩，零依赖**
 
-[![Version](https://img.shields.io/badge/version-v0.5.0-blue)](./outputs/docs/CHANGELOG.md)
-[![HTML5](https://img.shields.io/badge/HTML5-vanilla-orange)](./outputs/snake-game.html)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey)](./outputs/LICENSE)
-[![Snakes](https://img.shields.io/badge/snakes-12%20with%20talents-green)](#-12-条小蛇各有天赋)
-[![Board](https://img.shields.io/badge/board-orchard%20arena-purple)](#-果园竞技场视觉系统)
+[![Version 版本](https://img.shields.io/badge/version-v0.5.0-blue)](./outputs/docs/CHANGELOG.md)
+[![HTML5 原生技术](https://img.shields.io/badge/HTML5-vanilla-orange)](./outputs/snake-game.html)
+[![License 许可证](https://img.shields.io/badge/license-MIT-lightgrey)](./outputs/LICENSE)
+[![Snakes 小蛇数量](https://img.shields.io/badge/snakes-12%20with%20talents-green)](#-12-条小蛇各有天赋)
+[![Board 棋盘主题](https://img.shields.io/badge/board-orchard%20arena-purple)](#-果园竞技场视觉系统)
 
 **[English Documentation](./README.en.md)** · [中文文档](./README.md)（默认）
 
