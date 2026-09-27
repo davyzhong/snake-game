@@ -205,11 +205,18 @@ snake-game/
 ## 🤝 贡献 & Code of Conduct
 
 欢迎贡献！详见 [CONTRIBUTING.md](./CONTRIBUTING.md)（如未提供请提 issue）。
-本项目采用 [Contributor Covenant](CODE_OF_CONDUCT.md) v2.1（**TODO**: 添加）。
+本项目采用 [Contributor Covenant](CODE_OF_CONDUCT.md) v2.1。
 
 ## 🔒 Security
 
-发现安全漏洞请私下联系：security@example.dev，详见 [SECURITY.md](./SECURITY.md)（**TODO**: 添加）。
+发现安全漏洞请通过 GitHub 私密漏洞报告（仓库 Security 页 → Report a vulnerability）提交，详见 [SECURITY.md](./SECURITY.md)。
+
+## 🙏 致谢
+
+- **方法论**：本 README 的结构与自检口径遵循 [readme-craft](https://github.com/davyzhong/readme-craft) ——
+  19 条铁律 + 13 条反模式，规则以 `rules.yaml` 为单一事实源，可用 `npx github:davyzhong/readme-craft check .` 复验。
+- **贡献**：欢迎通过 Issue 与 PR 参与，具体流程见下方贡献章节。
+- **赞助**：本项目暂无商业赞助。若希望支持维护，请优先贡献 Issue、PR 或文档改进。
 
 ## 📜 License
 
