@@ -5,17 +5,6 @@ license: MIT
 homepage: https://github.com/davyzhong/snake-game
 ---
 
-## 架构
-
-```mermaid
-flowchart LR
-    A[index.html 入口] --> B[游戏主循环<br/>Canvas 渲染]
-    B --> C[游戏状态<br/>蛇 · 食物 · 天赋]
-    B --> D[输入处理<br/>键盘 / 触屏]
-    C --> B
-    S[scripts/screenshot.js<br/>Playwright] -. 自动生成 .-> O[outputs/<br/>README 截图]
-```
-
 <div align="center">
 
 # 🐍 贪吃蛇吃苹果
@@ -35,6 +24,17 @@ flowchart LR
 </div>
 
 ---
+
+## 架构
+
+```mermaid
+flowchart LR
+    A[index.html 入口] --> B[游戏主循环<br/>Canvas 渲染]
+    B --> C[游戏状态<br/>蛇 · 食物 · 天赋]
+    B --> D[输入处理<br/>键盘 / 触屏]
+    C --> B
+    S[scripts/screenshot.js<br/>Playwright] -. 自动生成 .-> O[outputs/<br/>README 截图]
+```
 
 ## 🎮 真实界面（v0.5.0 当前版本）
 

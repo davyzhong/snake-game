@@ -1,0 +1,96 @@
+# snake-game README 的 agent-reviewed 规则评审
+#
+# 评审对象：./README.md（231 行，v0.5.0）
+# 评审时间：2026-09-27
+# 项目类型：library / web-app（单文件 HTML5 游戏，双击即玩）
+# 用法：pnpm readme-craft check . --type library --review review.yaml
+#
+# 说明：个人趣味项目，无外部商业客户与可溯源用户引用，T11 按 N/A 处理。
+
+specVersion: 3.0.0-alpha.0
+
+reviews:
+  # T01 视觉锤
+  - id: T01
+    score: 5
+    reason: >-
+      frontmatter 之后即为居中主标题、一句话定位与 badge 矩阵；紧随其后的
+      「🎮 真实界面」章节提供 v0.5.0 实际游戏截图（非占位、非效果图），
+      alt 详细描述界面构成（12 条蛇卡片、HUD 字段、4 个局内功能按钮），
+      首屏视觉锤完整且真实可核。
+    evidence: [hero-visual, logo-tagline]
+
+  # T02 三秒价值主张
+  - id: T02
+    score: 5
+    reason: >-
+      首屏副标题给出「单文件 HTML5 桌面游戏 · 12 条带天赋小蛇 · 果园竞技场视觉 ·
+      双击即玩，零依赖」，「这是什么」章节进一步用第二句点明差异化：
+      有角色养成 + RPG 元素 + 果园美学的贪吃蛇，12 条小蛇各有天赋树。
+      做什么、给谁用、独特优势三要素完整。
+    evidence: [value-proposition]
+
+  # T04 安装路径
+  - id: T04
+    score: 4
+    reason: >-
+      作为零依赖单文件项目，安装路径即「双击打开 HTML 文件」，
+      README 明确说明无需安装、无需构建、无需服务器。
+      扣 1 分：未在快速开始章节首句直接给出文件下载/打开路径，
+      读者需读到「项目结构」才知道具体打开哪个文件。
+    evidence: [executable-command]
+
+  # T05 Quickstart
+  - id: T05
+    score: 4
+    reason: >-
+      提供独立的「🚀 60 秒快速开始」章节，含操作说明与截图矩阵入口。
+      扣 1 分：作为浏览器游戏本可直接给出可点击的在线试玩链接
+      （GitHub Pages），当前需下载文件后本地打开，试用路径多一步。
+    evidence: [quickstart-steps]
+
+  # T07 卖点编号
+  - id: T07
+    score: 5
+    reason: >-
+      「6 条核心亮点」每条均为「粗体关键词 + 具体机制」结构，且带可验证数字：
+      12 条小蛇（编号 1-12）、4 个局内功能并逐个说明效果（磁铁自动吸附、
+      护盾挡一次、苹果雨 5 秒下 5 个金苹果、慢动作 8 秒）、20 级成长系统、
+      多玩家档案列出 8 项持久化内容。无空泛形容词。
+    evidence: [numbered-selling-points, quantified-benefit]
+
+  # T08 Feature 分组
+  - id: T08
+    score: 4
+    reason: >-
+      按「真实界面 / 这是什么 / 核心亮点 / 快速开始 / 截图矩阵 / 完整文档 /
+      项目结构 / 技术栈 / Roadmap」组织，另有独立的截图自动化说明章节。
+      扣 1 分：无独立的 Feature 分组章节，功能信息分散在亮点与技术栈两处，
+      读者想快速了解「有哪些功能」时需跨章节拼接。
+    evidence: [feature-groups]
+
+  # T11 引用/背书
+  - id: T11
+    status: na
+    reason: >-
+      个人趣味项目，无商业客户与可溯源的外部用户引用。按 N/A 处理，
+      不虚构玩家数量或好评 quote。
+
+  # T14 包容性语言
+  - id: T14
+    score: 5
+    reason: >-
+      全文使用「你」等第二人称与中性称谓（「玩家」「每个玩家」），
+      无 he/she 默认指代、无性别化或地域化表述；
+      emoji 用于标记游戏元素而非替代文字说明，信息不依赖 emoji 单独传达。
+    evidence: [inclusive-language-review]
+
+  # T17 默认语言策略
+  - id: T17
+    score: 4
+    reason: >-
+      首屏第 22 行显式声明语言状态：中文文档为默认，英文版标注「规划中，欢迎 PR」，
+      与项目当前工作语言一致，策略清楚。
+      扣 1 分：英文版仅为规划声明，尚无可点击的英文入口或占位文件，
+      读者无法直接验证切换路径。
+    evidence: [default-language-rationale]
